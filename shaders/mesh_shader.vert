@@ -10,17 +10,21 @@ layout (location = 0) out vec3 outColor;
 
 // get camera data
 layout(set = 0, binding = 0) uniform CameraData{
-    mat4 model;
 	mat4 view;
 	mat4 projection;
 } cameraData;
 
+// push constants
+layout( push_constant ) uniform constants {
+    mat4 objectModelMatrix;
+} pushConstants;
+
 void main(){
     // calculate transformed position
-	gl_Position =   cameraData.projection *
-                    cameraData.view *
-                    cameraData.model *
-                    vec4(vPosition, 1.0f);
+	gl_Position = cameraData.projection *
+                  cameraData.view *
+                  pushConstants.objectModelMatrix *
+                  vec4(vPosition, 1.0f);
 
 	outColor = vColor;
 }

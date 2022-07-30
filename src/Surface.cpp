@@ -9,7 +9,7 @@ ReturnCode getSurfacePresentModes(VkPhysicalDevice physicalDevice,
     VkResult res = vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface,
                                                              &count, nullptr);
     if(res != VK_SUCCESS){
-        return ReturnCode::Failed;
+        return FAILED;
     }
 
     // get surface formats
@@ -17,11 +17,11 @@ ReturnCode getSurfacePresentModes(VkPhysicalDevice physicalDevice,
     res = vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface,
                                                     &count, presentModes.data());
     if(res == VK_SUCCESS){
-        return ReturnCode::Success;
+        return SUCCESS;
     }else if(res == VK_INCOMPLETE){
-        return ReturnCode::Incomplete;
+        return INCOMPLETE;
     }else{
-        return ReturnCode::Failed;
+        return FAILED;
     }
 }
 
@@ -44,11 +44,11 @@ ReturnCode getSurfaceFormats(VkPhysicalDevice physicalDevice,
     res = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface,
                                                &count, surfaceFormats.data());
     if(res == VK_SUCCESS){
-        return ReturnCode::Success;
+        return SUCCESS;
     }else if(res == VK_INCOMPLETE){
-        return ReturnCode::Incomplete;
+        return INCOMPLETE;
     }else{
-        return ReturnCode::Failed;
+        return FAILED;
     }
 }
 

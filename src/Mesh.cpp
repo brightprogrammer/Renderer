@@ -27,7 +27,7 @@ ReturnCode Mesh::loadFromObj(const char *filename){
     // This happens if the file can't be found or is malformed
     if (!err.empty()) {
         std::cerr << err << std::endl;
-        return ReturnCode::Failed;
+        return FAILED;
     }
 
      // Loop over shapes
@@ -73,5 +73,5 @@ ReturnCode Mesh::loadFromObj(const char *filename){
 
     std::cout << vertices.size() << "vertices loaded" << std::endl;
 
-    return ReturnCode::Success;
+    return SUCCESS;
 }

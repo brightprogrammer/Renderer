@@ -19,7 +19,7 @@ struct Mesh{
     /**
      * @brief Load an obj file to mesh.
      * @param[in] filename.
-     * @return ReturnCode::Success on success, ReturnCode::Failed otherwise.
+     * @return SUCCESS on success, FAILED otherwise.
      */
     ReturnCode loadFromObj(const char* filename);
 };

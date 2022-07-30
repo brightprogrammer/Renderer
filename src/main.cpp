@@ -30,23 +30,20 @@ int main(){
     // set to false when need to exit game loop
     bool gameIsRunning = true;
 
-    float linearSpeed = 500.f;
+    float linearSpeed = 1000.f;
     float angularSpeed = 20.f;
     float avgFrameTime = 0.f;
     size_t frameNumber = 1;
-
-    renderer.cameraData.model = glm::mat4(1.f);
 
     // change in time from last frame
     float deltaTime;
 
     float fieldOfView = 70.f;
     float aspectRatio = (float)WINDOW_WIDTH/WINDOW_HEIGHT;
-    Camera camera(fieldOfView, aspectRatio, glm::vec3(0, -6, 0), -Camera::ZAxis, Camera::YAxis);
+    Camera camera(fieldOfView, aspectRatio, glm::vec3(-20, -20, -20), Camera::ZAxis + Camera::YAxis + Camera::XAxis, Camera::YAxis);
 
     glm::vec3 move;
     glm::vec2 rotation;
-    renderer.cameraData.model = glm::mat4(1.f);
     renderer.cameraData.projection = camera.getProjectionMatrix();
 
     // keep track of keyboard state
@@ -54,7 +51,7 @@ int main(){
     // keep track of mouse state
     MouseState mouse;
 
-    float mouseX = 0, mouseY = 0;
+    // float mouseX = 0, mouseY = 0;
     int32_t windowWidth = WINDOW_WIDTH, windowHeight = WINDOW_HEIGHT;
 
     // the game loop

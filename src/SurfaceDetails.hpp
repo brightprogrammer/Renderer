@@ -26,8 +26,8 @@ struct SurfaceDetails{
  * @param physicalDevice [in] to be used for querying
  * @param surface [in] to be used for querying
  * @param surfaceDetails [out] will be filled with surface details
- * @return ReturnCode::Success on success
- * @return ReturnCode::Failed on failure
+ * @return SUCCESS on success
+ * @return FAILED on failure
  ***********************************************************************************/
 ReturnCode getSurfaceDetails(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface,
                              SurfaceDetails& surfaceDetails);

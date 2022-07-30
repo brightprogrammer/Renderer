@@ -9,10 +9,10 @@
  * @param[in] physicalDevice to be used.
  * @param[in] surface to query information for.
  * @param[out] presentModes filled with queried present modes.
- * @return ReturnCode::Success on success.
- * @return ReturnCode::Incomplete if number of present modes returned is less than
+ * @return SUCCESS on success.
+ * @return INCOMPLETE if number of present modes returned is less than
  * total number of present modes.
- * @return ReturnCode::Failed on failure.
+ * @return FAILED on failure.
  */
 ReturnCode getSurfacePresentModes(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface,
                                  std::vector<VkPresentModeKHR>& presentModes);
@@ -22,10 +22,10 @@ ReturnCode getSurfacePresentModes(VkPhysicalDevice physicalDevice, VkSurfaceKHR 
  * @param[in] physicalDevice to be used.
  * @param[in] surface to query information for.
  * @param[out] surfaceFormats filled with queried surface formats.
- * @return ReturnCode::Success on success.
- * @return ReturnCode::Incomplete if number of surface formats returned is less
+ * @return SUCCESS on success.
+ * @return INCOMPLETE if number of surface formats returned is less
  * than total number of present modes.
- * @return ReturnCode::Failed on failure.
+ * @return FAILED on failure.
  */
 ReturnCode getSurfaceFormats(VkPhysicalDevice physicalDevice,
                              VkSurfaceKHR surface,

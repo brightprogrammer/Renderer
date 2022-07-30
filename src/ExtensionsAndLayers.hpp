@@ -35,9 +35,9 @@ static std::vector<const char *> requiredLayers = {};
  * @param layerNames [out] will contain the names of layers required and present.
  * @param extensionNames [out] will contain names of extensions required and present.
  *
- * @return ReturnCode::Failed if some error occured.
- * @return ReturnCode::Incomplete if failed to find all requested layer or extensions.
- * @return ReturnCode::Success if all requested layer and extesions were found.
+ * @return FAILED if some error occured.
+ * @return INCOMPLETE if failed to find all requested layer or extensions.
+ * @return SUCCESS if all requested layer and extesions were found.
  ***************************************************************************************************************/
 ReturnCode getExtensionsAndLayers(SDL_Window *window,
 								  std::vector<const char *> &layerNames,

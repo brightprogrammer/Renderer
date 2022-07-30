@@ -22,13 +22,13 @@ struct QueueFamilyData{
     QueueFamilyData(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
 
     /// index of graphics queue
-    uint32_t graphicsQueueIdx = -1;
+    int32_t graphicsQueueIdx = -1;
     /// index of compute queue
-    uint32_t computeQueueIdx = -1;
+    int32_t computeQueueIdx = -1;
     /// index of transfer queue
-    uint32_t transferQueueIdx = -1;
+    int32_t transferQueueIdx = -1;
     /// index of queue family that supports presenting rendered images to surface
-    uint32_t surfaceSupportQueueIdx = -1;
+    int32_t presentQueueIdx = -1;
 };
 
 #endif//QUEUE_FAMILY_DATA_HPP

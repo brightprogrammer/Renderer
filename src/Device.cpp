@@ -8,23 +8,23 @@ ReturnCode enumeratePhysicalDevices(VkInstance instance,
     // get number of physical devices
     uint32_t c = 0;
     if(vkEnumeratePhysicalDevices(instance, &c, nullptr) != VK_SUCCESS){
-        return ReturnCode::Failed;
+        return FAILED;
     }
 
     // check if there are any devices present or not
     if(c == 0){
-        return ReturnCode::Failed;
+        return FAILED;
     }
 
     // get physical device handles
     physicalDevices.resize(c);
     VkResult res = vkEnumeratePhysicalDevices(instance, &c, physicalDevices.data());
     if(res == VK_SUCCESS){
-        return ReturnCode::Success;
+        return SUCCESS;
     } else if (res == VK_INCOMPLETE){
-        return ReturnCode::Incomplete;
+        return INCOMPLETE;
     } else {
-        return ReturnCode::Failed;
+        return FAILED;
     }
 }
 
@@ -48,18 +48,18 @@ ReturnCode getDeviceExtensionProperties(VkPhysicalDevice physicalDevice,
     uint32_t c;
     VkResult res = vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &c, nullptr);
     if(res != VK_SUCCESS){
-        return ReturnCode::Failed;
+        return FAILED;
     }
 
     // get extension properties
     extensionProperties.resize(c);
     res = vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &c, extensionProperties.data());
     if(res == VK_SUCCESS){
-        return ReturnCode::Success;
+        return SUCCESS;
     }else if(res == VK_INCOMPLETE){
-        return ReturnCode::Incomplete;
+        return INCOMPLETE;
     }else{
-        return ReturnCode::Failed;
+        return FAILED;
     }
 }
 
@@ -69,9 +69,9 @@ ReturnCode checkDeviceExtensionSupport(VkPhysicalDevice physicalDevice,
     // get extension properties
     std::vector<VkExtensionProperties> extensionProperties;
     ReturnCode retCode = getDeviceExtensionProperties(physicalDevice, extensionProperties);
-    if(retCode == ReturnCode::Failed){
-        return ReturnCode::Failed;
-    }else if(retCode == ReturnCode::Incomplete){
+    if(retCode == FAILED){
+        return FAILED;
+    }else if(retCode == INCOMPLETE){
         getDeviceExtensionProperties(physicalDevice, extensionProperties);
     }
 
@@ -84,9 +84,9 @@ ReturnCode checkDeviceExtensionSupport(VkPhysicalDevice physicalDevice,
             }
         }
         if(!found){
-            return ReturnCode::Failed;
+            return FAILED;
         }
     }
 
-    return ReturnCode::Success;
+    return SUCCESS;
 }

@@ -8,7 +8,7 @@
  * @param[in] filepath is the path of shader module to load.
  * @param[in] device to create shader module for.
  * @param[out] shaderModule is the created shader module.
- * @return ReturnCode::Success on success.
+ * @return SUCCESS on success.
  * @return ReturnCode::Failure on failure.
  */
 ReturnCode loadShaderModule(const char* filepath, VkDevice device,

@@ -25,9 +25,9 @@ ReturnCode checkIfLayerIsAavailable(const char* layerName){
 
     // check available
     if (!layerFound) {
-        return ReturnCode::Failed;
+        return FAILED;
     }else{
-        return ReturnCode::Success;
+        return SUCCESS;
     }
 }
 
@@ -54,9 +54,9 @@ ReturnCode checkIfExtensionIsAvailable(const char* extensionName){
 
     // check available
     if (!extensionFound) {
-        return ReturnCode::Failed;
+        return FAILED;
     }else{
-        return ReturnCode::Success;
+        return SUCCESS;
     }
 }
 
@@ -68,12 +68,12 @@ ReturnCode getExtensionsAndLayers(SDL_Window *window,
         // check if requred layers are present or not
         for (uint i = 0; i < requiredLayers.size(); i++) {
             // if not found then return failed
-            if (checkIfLayerIsAavailable(requiredLayers[i]) != ReturnCode::Success) {
+            if (checkIfLayerIsAavailable(requiredLayers[i]) != SUCCESS) {
                 std::cerr << "[WARNING] fn(getExtensionAndLayers) : Layer \""
                           << requiredLayers[i] << "\" requested but not found"
                           << std::endl;
 
-                return ReturnCode::Failed;
+                return FAILED;
             }else{
                 // since required layers is static, we can give pointers stored in it
                 // without doing a strcmp
@@ -90,7 +90,7 @@ ReturnCode getExtensionsAndLayers(SDL_Window *window,
                   << SDL_GetError() << "]" << std::endl;
 
         // failed
-        return ReturnCode::Failed;
+        return FAILED;
     } else {
         extensionNames.resize(extCount);
         if (SDL_Vulkan_GetInstanceExtensions(window, &extCount, extensionNames.data()) == SDL_FALSE) {
@@ -99,19 +99,19 @@ ReturnCode getExtensionsAndLayers(SDL_Window *window,
                       << SDL_GetError() << "]" << std::endl;
 
             // failed
-            return ReturnCode::Failed;
+            return FAILED;
         }
     }
 
     // check if requested extensions are present or not
     for(uint i = 0; i < requiredExtensions.size(); i++){
         // if not present then error
-        if(checkIfExtensionIsAvailable(requiredExtensions[i]) != ReturnCode::Success){
+        if(checkIfExtensionIsAvailable(requiredExtensions[i]) != SUCCESS){
             std::cerr << "[WARNING] fn(getExtensionAndLayers) : Extension \""
                       << requiredExtensions[i] << "\" requested but not found"
                       << std::endl;
 
-            return ReturnCode::Failed;
+            return FAILED;
         }else{
             // since requiredExtensions is static we can just give in pointer
             // to strings in it, instead of copying first and then storing!
@@ -120,5 +120,5 @@ ReturnCode getExtensionsAndLayers(SDL_Window *window,
     }
 
     // everything completed
-    return ReturnCode::Success;
+    return SUCCESS;
 }

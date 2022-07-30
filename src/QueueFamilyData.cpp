@@ -28,7 +28,7 @@ QueueFamilyData::QueueFamilyData(VkPhysicalDevice physicalDevice, VkSurfaceKHR s
         VkBool32 support = VK_FALSE;
         VkResult res = vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, qidx, surface, &support);
         if(res == VK_SUCCESS){
-            if(support == VK_TRUE) surfaceSupportQueueIdx = qidx;
+            if(support == VK_TRUE) presentQueueIdx = qidx;
         }else{
             std::cerr << "[ERROR] Failed to check for Surface support" << std::endl;
             exit(1);
@@ -38,7 +38,7 @@ QueueFamilyData::QueueFamilyData(VkPhysicalDevice physicalDevice, VkSurfaceKHR s
         if(graphicsQueueIdx >= 0 &&
             computeQueueIdx >= 0 &&
             transferQueueIdx >= 0 &&
-           surfaceSupportQueueIdx >= 0){
+           presentQueueIdx >= 0){
             break;
         }
     }

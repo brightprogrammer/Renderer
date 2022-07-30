@@ -6,29 +6,29 @@
 ReturnCode DebugMessenger::create(VkInstance instance){
     VkDebugUtilsMessengerCreateInfoEXT createInfo = defaultCreateInfo();
     if (createDebugUtilsMessengerEXT(instance, &createInfo,
-                                     nullptr, &handle) != ReturnCode::Success) {
-        return ReturnCode::Failed;
+                                     nullptr, &handle) != SUCCESS) {
+        return FAILED;
     }
 
-    return ReturnCode::Success;
+    return SUCCESS;
 }
 
 // create debug utils messenger for given create info
 ReturnCode DebugMessenger::create(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo){
     if (createDebugUtilsMessengerEXT(instance, pCreateInfo,
-                                     nullptr, &handle) != ReturnCode::Success) {
-        return ReturnCode::Failed;
+                                     nullptr, &handle) != SUCCESS) {
+        return FAILED;
     }
 
-    return ReturnCode::Success;
+    return SUCCESS;
 }
 
 // destroy debug messenger
 ReturnCode DebugMessenger::destroy(VkInstance instance){
-    if(destroyDebugUtilsMessengerEXT(instance, handle, nullptr) != ReturnCode::Success){
-        return ReturnCode::Failed;
+    if(destroyDebugUtilsMessengerEXT(instance, handle, nullptr) != SUCCESS){
+        return FAILED;
     }
-    return ReturnCode::Success;
+    return SUCCESS;
 }
 
 // debug callback function
@@ -65,14 +65,14 @@ ReturnCode DebugMessenger::createDebugUtilsMessengerEXT(
     if (func != nullptr) {
         if (func(instance, pCreateInfo, nullptr, pDebugMessenger) != VK_SUCCESS) {
             std::cerr << "Failed to create debug messenger" << std::endl;
-            return ReturnCode::Failed;
+            return FAILED;
         }else{ // only success case here
-            return ReturnCode::Success;
+            return SUCCESS;
         }
     } else {
         std::cerr << "Failed to get \"vkCreateDebugUtilsMessengerEXT\" function pointer"
                   << std::endl;
-        return ReturnCode::Failed;
+        return FAILED;
     }
 }
 
@@ -89,11 +89,11 @@ ReturnCode DebugMessenger::destroyDebugUtilsMessengerEXT(
     // if we got the pointer
     if (func != nullptr) {
         func(instance, debugMessenger, pAllocator); 
-        return ReturnCode::Success;
+        return SUCCESS;
     } else {
         std::cerr << "Failed to get \"vkDestroyDebugUtilsMessengerEXT\" function pointer"
                   << std::endl;
-        return ReturnCode::Failed;
+        return FAILED;
     }
 }
 

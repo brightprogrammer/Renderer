@@ -13,26 +13,26 @@ ReturnCode getSurfaceDetails(VkPhysicalDevice physicalDevice,VkSurfaceKHR surfac
     VkResult res = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface,
                                                              &surfaceDetails.capabilities);
     if(res != VK_SUCCESS){
-        return ReturnCode::Failed;
+        return FAILED;
     }
 
     // get surface present modes
     ReturnCode retCode = getSurfacePresentModes(physicalDevice, surface,
                                                 surfaceDetails.presentModes);
-    if(retCode == ReturnCode::Incomplete){
+    if(retCode == INCOMPLETE){
         getSurfacePresentModes(physicalDevice, surface, surfaceDetails.presentModes);
-    }else if(retCode == ReturnCode::Failed){
-        return ReturnCode::Failed;
+    }else if(retCode == FAILED){
+        return FAILED;
     }
 
     // get surface formats
     retCode = getSurfaceFormats(physicalDevice, surface,
                                 surfaceDetails.formats);
-    if(retCode == ReturnCode::Incomplete){
+    if(retCode == INCOMPLETE){
         getSurfaceFormats(physicalDevice, surface, surfaceDetails.formats);
-    }else if(retCode == ReturnCode::Failed){
-        return ReturnCode::Failed;
+    }else if(retCode == FAILED){
+        return FAILED;
     }
 
-    return ReturnCode::Success;
+    return SUCCESS;
 }

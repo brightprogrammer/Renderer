@@ -16,10 +16,10 @@ ReturnCode getSwapchainImages(VkDevice device, VkSwapchainKHR swapchain,
     swapchainImages.resize(count);
     res =  vkGetSwapchainImagesKHR(device, swapchain, &count, swapchainImages.data());
     if(res == VK_SUCCESS){
-        return ReturnCode::Success;
+        return SUCCESS;
     }else if(res == VK_INCOMPLETE){
-        return ReturnCode::Incomplete;
+        return INCOMPLETE;
     }else{
-        return ReturnCode::Failed;
+        return FAILED;
     }
  }

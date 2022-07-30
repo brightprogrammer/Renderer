@@ -2,6 +2,8 @@
 #define RENDERER_HPP
 
 #include <array>
+#include <vector>
+#include <unordered_map>
 
 #include "AllocatedImage.hpp"
 #include "DebugMessenger.hpp"
@@ -17,6 +19,17 @@
 #include "Mesh.hpp"
 
 #include <vulkan/vulkan_core.h>
+
+struct Material {
+    VkPipeline pipeline;
+    VkPipelineLayout pipelineLayout;
+};
+
+struct RenderObject {
+    Mesh* mesh;
+    Material* material;
+    glm::mat4 modelMatrix;
+};
 
 /**
  * @brief Renderer class to handle all rendering operations
@@ -42,6 +55,25 @@ public:
 
     // camera data
     GPUCameraData cameraData;
+
+    // array of renderable objects
+    std::vector<RenderObject> renderables;
+    std::unordered_map<std::string, Material> materials;
+    std::unordered_map<std::string, Mesh> meshes;
+
+    // create material and add it to the map
+    Material* createMaterial(VkPipeline pipeline, VkPipelineLayout layout, const std::string& name);
+
+    // find material by name
+    // returns nullptr if material cannot be found
+    Material* getMaterial(const std::string& name);
+
+    // find mesh by name
+    // returns nullptr if it can't be found
+    Mesh* getMesh(const std::string& name);
+
+    // draw method
+    void drawObjects(VkCommandBuffer cmd, RenderObject* first, size_t count);
 private:
     // sdl window to render images to
     SDL_Window *window;
@@ -83,7 +115,7 @@ private:
     // graphics queue handle
     VkQueue graphicsQueue = VK_NULL_HANDLE;
     // surface support queue handle
-    VkQueue surfaceSupportQueue = VK_NULL_HANDLE;
+    VkQueue presentQueue = VK_NULL_HANDLE;
     // transfer operations queue
     VkQueue transferQueue = VK_NULL_HANDLE;
     // create logical device from selected physical device
@@ -196,6 +228,7 @@ private:
 
     // create buffer of given size and usage
     AllocatedBuffer createBuffer(size_t allocSize, VkBufferUsageFlags usageFlags, VmaMemoryUsage memoryUsage);
+
 };
 
 #endif//RENDERER_HPP

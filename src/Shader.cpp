@@ -10,7 +10,7 @@ ReturnCode loadShaderModule(const char *filepath, VkDevice device,
 
     // if not open
     if (!file.is_open()) {
-        return ReturnCode::Failed;
+        return FAILED;
     }
 
     // find what the size of the file is by looking up the location of the cursor
@@ -42,6 +42,6 @@ ReturnCode loadShaderModule(const char *filepath, VkDevice device,
 
     //check that the creation goes well.
     if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS){
-        return ReturnCode::Failed;
-    } else return ReturnCode::Success;
+        return FAILED;
+    } else return SUCCESS;
 }

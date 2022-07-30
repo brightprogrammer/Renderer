@@ -2,7 +2,7 @@
 #define CONFIG_HPP
 
 // window settings
-#define WINDOW_TITLE "Project"
+#define WINDOW_TITLE "Dynamic"
 #define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 720
 #define MIN_WINDOW_WIDTH 800

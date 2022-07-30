@@ -11,6 +11,7 @@
 #include "VkResultString.hpp"
 #include "Swapchain.hpp"
 #include "Shader.hpp"
+#include "MeshPushConstants.hpp"
 
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_video.h>
@@ -29,13 +30,13 @@
 
 // renderer constructor
 Renderer::Renderer(SDL_Window *window)
-	: window(window) {
+     : window(window) {
     // create vulkan instance
     createInstance();
 
     // setup debug utils messenger
     if(validationEnabled){
-        if(debugMessenger.create(instance) != ReturnCode::Success){
+        if(debugMessenger.create(instance) != SUCCESS){
             std::cerr << "[ERROR] failed to create debug messenger";
             exit(1);
         }
@@ -103,7 +104,7 @@ void Renderer::cleanup(){
 
     // destroy debug messenger if validation enabled
     if(validationEnabled){
-        if(debugMessenger.destroy(instance) != ReturnCode::Success){
+        if(debugMessenger.destroy(instance) != SUCCESS){
             std::cerr << "[ERROR] failed to destroy debug messenger";
         }
     }
@@ -115,36 +116,28 @@ void Renderer::cleanup(){
 
 // create vulkan instance for renderer
 void Renderer::createInstance(){
-    if(instance == VK_NULL_HANDLE){
-        // get required instance layer and extensions
-        std::vector<const char *> layerNames, extNames;
-        getExtensionsAndLayers(window, layerNames, extNames);
+    // get required instance layer and extensions
+    std::vector<const char*> layerNames, extNames;
+    getExtensionsAndLayers(window, layerNames, extNames);
 
-        // get debug messenger create info and pass it as pnext in instance create info
-        // this will create a debug messenger before creating instance
-        // this will help us log instance creation and destruction
-        VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = DebugMessenger::defaultCreateInfo();
+    // get debug messenger create info and pass it as pnext in instance create info
+    // this will create a debug messenger before creating instance
+    // this will help us log instance creation and destruction
+    VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = DebugMessenger::defaultCreateInfo();
 
-        // give information to vulkan on how to create instance
-        VkInstanceCreateInfo instanceCreateInfo = {
-            .sType = STYPE(INSTANCE_CREATE_INFO),
-            .pNext = &debugCreateInfo,
-            .pApplicationInfo = nullptr,
-            .enabledLayerCount = static_cast<uint32_t>(layerNames.size()),
-            .ppEnabledLayerNames = layerNames.data(),
-            .enabledExtensionCount = static_cast<uint32_t>(extNames.size()),
-            .ppEnabledExtensionNames = extNames.data(),
-        };
+    // give information to vulkan on how to create instance
+    VkInstanceCreateInfo instanceCreateInfo = {
+        .sType = STYPE(INSTANCE_CREATE_INFO),
+        .pNext = &debugCreateInfo,
+        .pApplicationInfo = nullptr,
+        .enabledLayerCount = static_cast<uint32_t>(layerNames.size()),
+        .ppEnabledLayerNames = layerNames.data(),
+        .enabledExtensionCount = static_cast<uint32_t>(extNames.size()),
+        .ppEnabledExtensionNames = extNames.data(),
+    };
 
-        // create instance
-        VkResult res = vkCreateInstance(&instanceCreateInfo, nullptr, &instance);
-        if (res != VK_SUCCESS) {
-            std::cerr << "[ERROR] failed to create vulkan instance "
-                      << "[" << VkResultString(res)  << "]"; // error code
-        }
-    }else{
-        throw std::logic_error("[WARNING] multiple calls to Renderer::createInstance()");
-    }
+    // create instance
+    VKCHECK(vkCreateInstance(&instanceCreateInfo, nullptr, &instance));
 }
 
 // create surface for the given window
@@ -164,11 +157,9 @@ void Renderer::selectPhysicalDevice(){
     // get physical devices
     std::vector<VkPhysicalDevice> physicalDevices;
     ReturnCode retCode = enumeratePhysicalDevices(instance, physicalDevices);
-    if(retCode == ReturnCode::Failed){
-        std::cerr << "[ERROR] Failed to enumerate Physical Devices on host" << std::endl;
+    if(retCode == FAILED){
+        std::cerr << "[ERROR] Failed to enumerate physical devices on host" << std::endl;
         exit(1);
-    }else if(retCode == ReturnCode::Incomplete){
-        enumeratePhysicalDevices(instance, physicalDevices);
     }
 
     // check for compatibility
@@ -182,7 +173,7 @@ void Renderer::selectPhysicalDevice(){
         // get queue family data
         queueFamilyData = QueueFamilyData(phyDev, surface);
         if((queueFamilyData.graphicsQueueIdx == -1) ||
-           (queueFamilyData.surfaceSupportQueueIdx == -1) ||
+           (queueFamilyData.presentQueueIdx == -1) ||
            (queueFamilyData.transferQueueIdx == -1)){
             // device is not suitable since the required queue families are not present
             deviceIsSuitable = false;
@@ -193,7 +184,7 @@ void Renderer::selectPhysicalDevice(){
 
         // check if desired extensions are available
         if(deviceIsSuitable){
-            if(checkDeviceExtensionSupport(phyDev, deviceExtensions) == ReturnCode::Success)
+            if(checkDeviceExtensionSupport(phyDev, deviceExtensions) == SUCCESS)
                 deviceIsSuitable = true;
             else deviceIsSuitable = false;
         }
@@ -261,9 +252,9 @@ void Renderer::createLogicalDevice(){
     };
 
     std::set<uint32_t> uniqueQueueIndices = {
-        queueFamilyData.graphicsQueueIdx,
-        queueFamilyData.surfaceSupportQueueIdx,
-        queueFamilyData.transferQueueIdx
+        static_cast<uint32_t>(queueFamilyData.graphicsQueueIdx),
+        static_cast<uint32_t>(queueFamilyData.presentQueueIdx),
+        static_cast<uint32_t>(queueFamilyData.transferQueueIdx)
     };
 
     // create queue create infos for unique queues
@@ -292,7 +283,7 @@ void Renderer::createLogicalDevice(){
 
     // get graphics and surface support queue
     vkGetDeviceQueue(device, queueFamilyData.graphicsQueueIdx, 0, &graphicsQueue);
-    vkGetDeviceQueue(device, queueFamilyData.surfaceSupportQueueIdx, 0, &surfaceSupportQueue);
+    vkGetDeviceQueue(device, queueFamilyData.presentQueueIdx, 0, &presentQueue);
     vkGetDeviceQueue(device, queueFamilyData.transferQueueIdx, 0, &transferQueue);
 }
 
@@ -350,14 +341,14 @@ void Renderer::createSwapchain(){
 
     // queue family indices and count
     std::vector<uint32_t> queueFamilyIndices = {
-        queueFamilyData.graphicsQueueIdx
+        static_cast<uint32_t>(queueFamilyData.graphicsQueueIdx)
     };
 
     // sharing mode
     VkSharingMode sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    if(queueFamilyData.graphicsQueueIdx != queueFamilyData.surfaceSupportQueueIdx){
+    if(queueFamilyData.graphicsQueueIdx != queueFamilyData.presentQueueIdx){
         sharingMode = VK_SHARING_MODE_CONCURRENT;
-        queueFamilyIndices.push_back(queueFamilyData.surfaceSupportQueueIdx);
+        queueFamilyIndices.push_back(queueFamilyData.presentQueueIdx);
     }
 
     // swapchain create info
@@ -387,9 +378,9 @@ void Renderer::createSwapchain(){
 
     // get swapchain images
     ReturnCode retCode = getSwapchainImages(device, swapchain, swapchainImages);
-    if(retCode == ReturnCode::Success){
+    if(retCode == SUCCESS){
         swapchainImageCount = swapchainImages.size();
-    }else if(retCode == ReturnCode::Incomplete){
+    }else if(retCode == INCOMPLETE){
         getSwapchainImages(device, swapchain, swapchainImages);
         swapchainImageCount = swapchainImages.size();
     }else{
@@ -398,7 +389,7 @@ void Renderer::createSwapchain(){
     }
 
     // add to deletion queue
-    if(retCode == ReturnCode::Success || retCode == ReturnCode::Incomplete){
+    if(retCode == SUCCESS || retCode == INCOMPLETE){
         swapchainDeletionQueue.push_function([=](){
             vkDestroySwapchainKHR(device, swapchain, nullptr);
         });
@@ -507,6 +498,8 @@ void Renderer::createCommandPool(){
     // create command pool for transfer operation
     commandPoolInfo.queueFamilyIndex = queueFamilyData.transferQueueIdx;
     VKCHECK(vkCreateCommandPool(device, &commandPoolInfo, nullptr, &transferCommandPool));
+
+
     // add to deletion queue
     mainDeletionQueue.push_function([=](){
         vkDestroyCommandPool(device, transferCommandPool, nullptr);
@@ -700,8 +693,26 @@ void Renderer::initSyncStructures(){
 
 // load mesh
 void Renderer::loadMeshes(){
-    mesh.loadFromObj("../assets/monkey_head.obj");
+    mesh.loadFromObj("../assets/koenigsegg.obj");
     uploadMesh(mesh);
+
+    meshes["car"] = mesh;
+
+    glm::mat4 translation = glm::translate(glm::mat4{ 1.0 }, glm::vec3(-10, 0, 10));
+    glm::mat4 scale = glm::scale(glm::mat4{ 1.0 }, glm::vec3(0.2, 0.2, 0.2));
+
+    RenderObject obj;
+    obj.modelMatrix = translation * scale;
+    obj.mesh = getMesh("car");
+    obj.material = getMaterial("defaultMaterial");
+
+    renderables.push_back(obj);
+
+    translation = glm::translate(glm::mat4{ 1.0 }, glm::vec3(-40, 0, 40));
+    scale = glm::scale(glm::mat4{ 1.0 }, glm::vec3(1, 1, 1));
+    obj.modelMatrix = translation * scale;
+
+    renderables.push_back(obj);
 };
 
 void Renderer::uploadMesh(Mesh &mesh) {
@@ -731,16 +742,8 @@ void Renderer::uploadMesh(Mesh &mesh) {
 
 // draw on screen
 void Renderer::draw(){
-    //camera view
-    glm::vec3 camPos = { 0.f,-6.f,-10.f };
-    glm::mat4 view = glm::translate(glm::mat4(1.f), camPos);
-    //camera projection
-    glm::mat4 projection = glm::perspective(glm::radians(70.f), 1700.f / 900.f, 0.1f, 200.0f);
-    projection[1][1] *= -1;
-
-    // camera data will be modified by user of renderer
-
-    //and copy it to the buffer
+    // update camera data every frame
+    // camera data is modified per frame in the main loop depending on the events triggered
     void* data;
     vmaMapMemory(allocator, getCurrentFrame().cameraBuffer.allocation, &data);
     memcpy(data, &cameraData, sizeof(GPUCameraData));
@@ -768,7 +771,7 @@ void Renderer::draw(){
         abort();
     }
 
-    //now that we are sure that the commands finished executing, we can safely reset the command buffer to begin recording again.
+    // now that we are sure that the commands finished executing, we can safely reset the command buffer to begin recording again.
     VKCHECK(vkResetCommandBuffer(currentFrame.commandBuffer, 0));
 
     // shorter name
@@ -788,7 +791,7 @@ void Renderer::draw(){
     // set a clear value to clear the screen with
     VkClearValue colorClear{
         .color = VkClearColorValue{
-            .float32 = {0.039, 0, 0.078, 1.f}
+            .float32 = {0.01, 0.01, 0.01, 1.f} // dark gray
         }
     };
 
@@ -816,18 +819,12 @@ void Renderer::draw(){
     // begin render pass
     vkCmdBeginRenderPass(cmd, &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    // bind pipeline
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, meshPipeline);
-
     // bind descriptor set
+    // this is to send camera data per frame
     vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, meshPipelineLayout, 0, 1, &currentFrame.globalDescriptorSet, 0, nullptr);
 
-    // bind vertex buffers
-    VkDeviceSize offset = 0;
-    vkCmdBindVertexBuffers(cmd, 0, 1, &mesh.vertexBuffer.buffer, &offset);
-
-    // draw mesh
-    vkCmdDraw(cmd, mesh.vertices.size(), 1, 0, 0);
+    // draw renderables
+    drawObjects(cmd, renderables.data(), renderables.size());
 
     // end renderpass
     vkCmdEndRenderPass(cmd);
@@ -872,7 +869,7 @@ void Renderer::draw(){
     };
 
     // submit for presentation to surface
-    res = vkQueuePresentKHR(surfaceSupportQueue, &presentInfo);
+    res = vkQueuePresentKHR(presentQueue, &presentInfo);
     if(res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR || framebufferResized){
         // swapchain is no longer compatible
         // recreate one
@@ -949,12 +946,12 @@ void Renderer::initDescriptors(){
         vkDestroyDescriptorSetLayout(device, globalDescriptorSetLayout, nullptr);
     });
 
-    // allocate buffers
+    // allocate buffers, allocate one descriptor set per frame and write to each descriptor set with camera data
     for(uint32_t i = 0; i < bufferingSize; i++){
         // create buffer that the camera descriptor will point to
         frames[i].cameraBuffer = createBuffer(sizeof(GPUCameraData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
-        // allocate descriptor set
+        // allocate descriptor set per frame data
         VkDescriptorSetAllocateInfo setAllocInfo = {};
         setAllocInfo.sType = STYPE(DESCRIPTOR_SET_ALLOCATE_INFO);
         setAllocInfo.pNext = nullptr;
@@ -975,6 +972,7 @@ void Renderer::initDescriptors(){
         // point to this buffer
         bufferInfo.buffer = frames[i].cameraBuffer.buffer;
         // what offset in this buffer?
+        // this means we can allocate a large buffer and write at different places
         bufferInfo.offset = 0; // beginning
         // size of buffer after offset
         bufferInfo.range = sizeof(GPUCameraData);
@@ -984,6 +982,7 @@ void Renderer::initDescriptors(){
         setWrite.sType = STYPE(WRITE_DESCRIPTOR_SET);
         setWrite.pNext = nullptr;
         // which binding to write to?
+        // so if we had 10 bindings, then this will change correspondingly!
         setWrite.dstBinding = 0;
         // and which set to write to
         setWrite.dstSet = frames[i].globalDescriptorSet;
@@ -1005,20 +1004,32 @@ void Renderer::initDescriptors(){
 // create graphics pipeline
 void Renderer::initGraphicsPipeline(){
     // load fragmment shader
-    if(loadShaderModule("../shaders/compiled/mesh_shader.frag.spv", device, meshFS) != ReturnCode::Success){
+    if(loadShaderModule("../shaders/compiled/mesh_shader.frag.spv", device, meshFS) != SUCCESS){
         std::cerr << "[ERROR] Failed to create fragment shader module" << std::endl;
     }
 
     // load vertex shader
-    if(loadShaderModule("../shaders/compiled/mesh_shader.vert.spv", device, meshVS) != ReturnCode::Success){
+    if(loadShaderModule("../shaders/compiled/mesh_shader.vert.spv", device, meshVS) != SUCCESS){
         std::cerr << "[ERROR] Failed to create vertex shader module" << std::endl;
     }
 
     // build the pipeline layout that controls the inputs/outputs of the shader
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = defaultPipelineLayoutCreateInfo();
+
+    // setup push constants
+    // this push constant will be sent at vertex stage
+    VkPushConstantRange pushConstant = {};
+    pushConstant.offset = 0;
+    pushConstant.size = sizeof(MeshPushConstants);
+    pushConstant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+    pipelineLayoutInfo.pushConstantRangeCount = 1;
+    pipelineLayoutInfo.pPushConstantRanges = &pushConstant;
+
     // using only one descriptor set for now, for camera data
     pipelineLayoutInfo.setLayoutCount = 1;
     pipelineLayoutInfo.pSetLayouts = &globalDescriptorSetLayout;
+
     // create pipeline layout
     VKCHECK(vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &meshPipelineLayout));
 
@@ -1035,7 +1046,7 @@ void Renderer::initGraphicsPipeline(){
 
     // vertex input controls how vertex is read from vertex buffers
     pipelineBuilder.vertexInputInfo = defaultPipelineVertexInputStateCreateInfo();
-   	// connect the pipeline builder vertex input info to the one we get from Vertex
+    // connect the pipeline builder vertex input info to the one we get from Vertex
     pipelineBuilder.vertexInputInfo.pVertexAttributeDescriptions = vertexDescription.attributes.data();
     pipelineBuilder.vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexDescription.attributes.size());
     pipelineBuilder.vertexInputInfo.pVertexBindingDescriptions = vertexDescription.bindings.data();
@@ -1081,12 +1092,12 @@ void Renderer::initGraphicsPipeline(){
     meshPipeline = pipelineBuilder.buildPipeline(device, renderPass);
     assert(meshPipeline && "FAILED TO CREATE PIPELINE");
 
+    // destroy shader modules
+    vkDestroyShaderModule(device, meshVS, nullptr);
+    vkDestroyShaderModule(device, meshFS, nullptr);
+
     // these objects will be destroyed in the end
     mainDeletionQueue.push_function([=](){
-        // destroy shader modules
-        vkDestroyShaderModule(device, meshVS, nullptr);
-        vkDestroyShaderModule(device, meshFS, nullptr);
-
         // destroy pipeline layout
         vkDestroyPipelineLayout(device, meshPipelineLayout, nullptr);
     });
@@ -1096,6 +1107,8 @@ void Renderer::initGraphicsPipeline(){
         // destroy pipeline
         vkDestroyPipeline(device, meshPipeline, nullptr);
     });
+
+    createMaterial(meshPipeline, meshPipelineLayout, "defaultMaterial");
 }
 
 // recreate swapchain on window resize
@@ -1164,4 +1177,65 @@ AllocatedBuffer Renderer::createBuffer(size_t allocSize, VkBufferUsageFlags usag
     });
 
     return allocatedBuffer;
+}
+
+// create material and return address
+Material* Renderer::createMaterial(VkPipeline pipeline, VkPipelineLayout layout, const std::string& name){
+    materials[name] = {pipeline, layout};
+    return &materials[name];
+}
+
+// get material by name
+Material* Renderer::getMaterial(const std::string& name){
+    auto it = materials.find(name);
+    if(it == materials.end()){
+        return nullptr;
+    }
+
+    return &(*it).second;
+}
+
+// get mesh by name
+Mesh* Renderer::getMesh(const std::string& name){
+     auto it = meshes.find(name);
+    if(it == meshes.end()){
+        return nullptr;
+    }
+
+    return &(*it).second;
+}
+
+// draw a list of renderables
+void Renderer::drawObjects(VkCommandBuffer cmd, RenderObject* first, size_t count){
+    // store last mesh and last material to reduce total number of bindings in for loop
+    Mesh* lastMesh = nullptr;
+    Material* lastMaterial = nullptr;
+
+    // data to be sent for every object
+    MeshPushConstants pushConstants;
+
+    for(size_t i = 0; i < count; i++){
+        // get object data to be drawn
+        RenderObject& object = first[i];
+
+        // bind new pipeline if and only if it doesn't match the previous one
+        if(object.material != lastMaterial){
+            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, object.material->pipeline);
+            lastMaterial = object.material;
+        }
+
+        // send object model matrix for every object
+        pushConstants.objectModelMatrix = object.modelMatrix;
+        vkCmdPushConstants(cmd, meshPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(MeshPushConstants), &pushConstants);
+
+        // bind mesh only if it's different from last one
+        if(object.mesh != lastMesh){
+            VkDeviceSize offset = 0;
+            vkCmdBindVertexBuffers(cmd, 0, 1, &object.mesh->vertexBuffer.buffer, &offset);
+            lastMesh = object.mesh;
+        }
+
+        // finally draw this object
+        vkCmdDraw(cmd, object.mesh->vertices.size(), 1, 0, 0);
+    }
 }
