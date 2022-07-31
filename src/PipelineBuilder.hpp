@@ -4,6 +4,10 @@
 #include "Common.hpp"
 #include <vulkan/vulkan_core.h>
 
+/*
+ * By default pipeline builder will add dynamic scissor and viewport states.
+ */
+
 struct PipelineBuilder {
     std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
     VkPipelineVertexInputStateCreateInfo vertexInputInfo;
@@ -13,6 +17,7 @@ struct PipelineBuilder {
     VkPipelineRasterizationStateCreateInfo rasterizer;
     VkPipelineColorBlendAttachmentState colorBlendAttachment;
     VkPipelineMultisampleStateCreateInfo multisampling;
+    VkPipelineDynamicStateCreateInfo dynamicState;
     VkPipelineLayout pipelineLayout;
     VkPipelineDepthStencilStateCreateInfo depthStencil;
 

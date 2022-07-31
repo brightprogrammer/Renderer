@@ -195,3 +195,14 @@ VkPipelineLayoutCreateInfo defaultPipelineLayoutCreateInfo(){
         .pPushConstantRanges = nullptr
     };
 }
+
+// get preinitialized pipeline dynamic state create info
+VkPipelineDynamicStateCreateInfo defaultPipelineDynamicStateCreateInfo(std::vector<VkDynamicState>& dynamicStates,
+                                                                       VkPipelineDynamicStateCreateFlags flags){
+    VkPipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo {};
+    pipelineDynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    pipelineDynamicStateCreateInfo.pDynamicStates = dynamicStates.data();
+    pipelineDynamicStateCreateInfo.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+    pipelineDynamicStateCreateInfo.flags = flags;
+    return pipelineDynamicStateCreateInfo;
+}

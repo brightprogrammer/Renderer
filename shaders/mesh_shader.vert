@@ -10,8 +10,8 @@ layout (location = 0) out vec3 outColor;
 
 // get camera data
 layout(set = 0, binding = 0) uniform CameraData{
-	mat4 view;
-	mat4 projection;
+    mat4 view;
+    mat4 projection;
 } cameraData;
 
 // push constants
@@ -21,10 +21,23 @@ layout( push_constant ) uniform constants {
 
 void main(){
     // calculate transformed position
-	gl_Position = cameraData.projection *
+    gl_Position = cameraData.projection *
                   cameraData.view *
                   pushConstants.objectModelMatrix *
                   vec4(vPosition, 1.0f);
 
-	outColor = vColor;
+    vec3 lightColor = vec3(1.0f, 1.0f, 1.0f);
+    vec3 lightPos = vec3(10, 10, 10);
+
+    float ambientStrength = 0.1;
+    vec3 ambient = ambientStrength * lightColor;
+
+    vec3 Normal = mat3(transpose(inverse(pushConstants.objectModelMatrix))) * vNormal;
+    vec3 fragPos = vec3(pushConstants.objectModelMatrix * vec4(vPosition, 1.f));
+    vec3 lightDir = normalize(lightPos - fragPos);
+    float diff = max(dot(Normal, lightDir), 0.0);
+    vec3 diffuse = diff * lightColor;
+
+    vec3 result = (ambient + diffuse) * vColor;
+    outColor = result;
 }

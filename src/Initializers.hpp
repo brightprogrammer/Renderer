@@ -118,4 +118,11 @@ VkPipelineColorBlendAttachmentState defaultPipelineColorBlendAttachmentState();
  */
 VkPipelineLayoutCreateInfo defaultPipelineLayoutCreateInfo();
 
+/**
+ * @brief Get default initialized pipeline dynamic state create info.
+ * @return preinitialized VkPipelineDynamicStateCreateInfo struct.
+ */
+VkPipelineDynamicStateCreateInfo defaultPipelineDynamicStateCreateInfo(std::vector<VkDynamicState>& dynamicStates,
+                                                                       VkPipelineDynamicStateCreateFlags flags = 0);
+
 #endif//INITIALIZERS_HPP

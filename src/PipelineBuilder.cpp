@@ -12,9 +12,9 @@ VkPipeline PipelineBuilder::buildPipeline(VkDevice device, VkRenderPass renderPa
         .pNext = nullptr,
         .flags = 0,
         .viewportCount = 1,
-        .pViewports = &viewport,
+ //       .pViewports = &viewport,
         .scissorCount = 1,
-        .pScissors = &scissor
+   //     .pScissors = &scissor
     };
 
     // setup dummy color blend state
@@ -42,11 +42,13 @@ VkPipeline PipelineBuilder::buildPipeline(VkDevice device, VkRenderPass renderPa
         .pMultisampleState = &multisampling,
         .pDepthStencilState = &depthStencil,
         .pColorBlendState = &colorBlending,
+        .pDynamicState = &dynamicState,
         .layout = pipelineLayout,
         .renderPass = renderPass,
         .subpass = 0, // first first subpass in the given renderpass
         .basePipelineHandle = VK_NULL_HANDLE
     };
+
 
     // create pipeline
     VkPipeline pipeline;

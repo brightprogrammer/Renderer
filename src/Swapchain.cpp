@@ -3,7 +3,7 @@
 // get images from swapchain
 ReturnCode getSwapchainImages(VkDevice device, VkSwapchainKHR swapchain,
                               std::vector<VkImage>& swapchainImages){
-    // get surface format count
+    // get number of swapchain images
     uint32_t count = 0;
     VkResult res = vkGetSwapchainImagesKHR(device, swapchain, &count, nullptr);
     if(res != VK_SUCCESS){
@@ -12,9 +12,11 @@ ReturnCode getSwapchainImages(VkDevice device, VkSwapchainKHR swapchain,
         exit(1);
     }
 
-    // get surface formats
+    // get swapchain images
+    swapchainImages.clear();
     swapchainImages.resize(count);
     res =  vkGetSwapchainImagesKHR(device, swapchain, &count, swapchainImages.data());
+
     if(res == VK_SUCCESS){
         return SUCCESS;
     }else if(res == VK_INCOMPLETE){

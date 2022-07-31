@@ -12,6 +12,7 @@
 #include "Swapchain.hpp"
 #include "Shader.hpp"
 #include "MeshPushConstants.hpp"
+#include "Math.hpp"
 
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_video.h>
@@ -27,6 +28,8 @@
 #include <stdexcept>
 #include <vector>
 #include <cstdint>
+
+#define PI 3.14159265359
 
 // renderer constructor
 Renderer::Renderer(SDL_Window *window)
@@ -95,6 +98,9 @@ void Renderer::cleanup(){
 
     // delete objects created after logical device creation
     mainDeletionQueue.flush();
+
+    // destroy swapchain
+    vkDestroySwapchainKHR(device, swapchain, nullptr);
 
     // destroy logical device
     vkDestroyDevice(device, nullptr);
@@ -351,6 +357,12 @@ void Renderer::createSwapchain(){
         queueFamilyIndices.push_back(queueFamilyData.presentQueueIdx);
     }
 
+    // make use of already created swapchain
+    VkSwapchainKHR oldSwapchain = VK_NULL_HANDLE;
+    if(swapchain != VK_NULL_HANDLE)
+        oldSwapchain = swapchain;
+
+    
     // swapchain create info
     VkSwapchainCreateInfoKHR createInfo = {
         .sType = STYPE(SWAPCHAIN_CREATE_INFO_KHR),
@@ -370,30 +382,26 @@ void Renderer::createSwapchain(){
         .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
         .presentMode = presentMode,
         .clipped = VK_TRUE, // NOTE : Notorius setting here
-        .oldSwapchain = VK_NULL_HANDLE
+        .oldSwapchain = oldSwapchain
     };
 
     // create swapchain
     VKCHECK(vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapchain));
 
+    // no need to destroy old swapchain
+    // destroying it means destroying images too
+    // as the previous images are reused here!
+
     // get swapchain images
     ReturnCode retCode = getSwapchainImages(device, swapchain, swapchainImages);
     if(retCode == SUCCESS){
-        swapchainImageCount = swapchainImages.size();
-    }else if(retCode == INCOMPLETE){
-        getSwapchainImages(device, swapchain, swapchainImages);
         swapchainImageCount = swapchainImages.size();
     }else{
         std::cerr << "[ERROR] Failed to get swapchain images" << std::endl;
         exit(1);
     }
 
-    // add to deletion queue
-    if(retCode == SUCCESS || retCode == INCOMPLETE){
-        swapchainDeletionQueue.push_function([=](){
-            vkDestroySwapchainKHR(device, swapchain, nullptr);
-        });
-    }
+    // swapchain will be explicitly destroyed
 }
 
 // create depth image
@@ -508,7 +516,7 @@ void Renderer::createCommandPool(){
 
 // allocate command buffers for each frame
 void Renderer::allocateCommandBuffers(){
-    for(int i = 0; i < bufferingSize; i++){
+    for(uint32_t i = 0; i < bufferingSize; i++){
         //allocate the default command buffer that we will use for rendering
         VkCommandBufferAllocateInfo cmdAllocInfo = defaultCommandBufferAllocateInfo(frames[i].commandPool, 1);
         // allocate cmd buffers
@@ -713,6 +721,107 @@ void Renderer::loadMeshes(){
     obj.modelMatrix = translation * scale;
 
     renderables.push_back(obj);
+
+    // create sphere mesh
+    static Mesh sphere;
+    uint32_t slices = 10, circles = 10;
+    float verticalAngleStep = PI / circles;
+    float horizontalAngleStep = 2*PI / slices;
+    float radius = 2.f;
+
+    for(uint32_t s = 0; s < slices; s++){
+        Vertex v1, v2, v3;
+
+        // generate vertices for topmost circle
+        v1.position = sphericalToCartesian(radius, 0, 0);
+        v2.position = sphericalToCartesian(radius, s*horizontalAngleStep, verticalAngleStep);
+        v3.position = sphericalToCartesian(radius, (s+1)*horizontalAngleStep, verticalAngleStep);
+
+        // normal is just the normalized position in this case
+        v1.normal = glm::normalize(v1.position);
+        v2.normal = glm::normalize(v2.position);
+        v3.normal = glm::normalize(v3.position);
+
+        v1.color = v1.normal;
+        v2.color = v2.normal;
+        v3.color = v3.normal;
+
+        // store triangle
+        sphere.vertices.push_back(v1);
+        sphere.vertices.push_back(v3);
+        sphere.vertices.push_back(v2);
+
+        // generate vertices for bottom-most circle
+        v1.position = sphericalToCartesian(radius, 0, PI);
+        v2.position = sphericalToCartesian(radius, s*horizontalAngleStep, (circles-1)*verticalAngleStep);
+        v3.position = sphericalToCartesian(radius, (s+1)*horizontalAngleStep, (circles-1)*verticalAngleStep);
+
+        // normal is just the normalized position in this case
+        v1.normal = glm::normalize(v1.position);
+        v2.normal = glm::normalize(v2.position);
+        v3.normal = glm::normalize(v3.position);
+
+        v1.color = v1.normal;
+        v2.color = v2.normal;
+        v3.color = v3.normal;
+
+        // store triangle
+        sphere.vertices.push_back(v1);
+        sphere.vertices.push_back(v2);
+        sphere.vertices.push_back(v3);
+    }
+
+    // generate vertices leaving topmost circle and bottom-most circle
+    for(uint32_t s = 0; s < slices; s++){
+        for(uint32_t c = 1; c < circles - 1; c++){
+            Vertex v1, v2, v3, v4;
+
+            // calculate position of these points
+            v1.position = sphericalToCartesian(radius, s*horizontalAngleStep, c*verticalAngleStep);
+            v2.position = sphericalToCartesian(radius, (s+1)*horizontalAngleStep, c*verticalAngleStep);
+            v3.position = sphericalToCartesian(radius, (s+1)*horizontalAngleStep, (c+1)*verticalAngleStep);
+            v4.position = sphericalToCartesian(radius, s*horizontalAngleStep, (c+1)*verticalAngleStep);
+
+            // normal is just the normalized position in this case
+            v1.normal = glm::normalize(v1.position);
+            v2.normal = glm::normalize(v2.position);
+            v3.normal = glm::normalize(v3.position);
+            v4.normal = glm::normalize(v4.position);
+
+            // light grey color
+            // v1.color = glm::vec3(0.1, 0.1, 0.1);
+            // v2.color = glm::vec3(0.1, 0.1, 0.1);
+            // v3.color = glm::vec3(0.1, 0.1, 0.1);
+            // v4.color = glm::vec3(0.1, 0.1, 0.1);
+
+            v1.color = v1.normal;
+            v2.color = v2.normal;
+            v3.color = v3.normal;
+            v4.color = v4.normal;
+
+            // add first triangle to mesh
+            sphere.vertices.push_back(v1);
+            sphere.vertices.push_back(v2);
+            sphere.vertices.push_back(v4);
+
+            // add second triangle to mesh
+            sphere.vertices.push_back(v2);
+            sphere.vertices.push_back(v3);
+            sphere.vertices.push_back(v4);
+        }
+    }
+
+    uploadMesh(sphere);
+
+    translation = glm::translate(glm::mat4{ 1.0 }, glm::vec3(10, 10, -10));
+    scale = glm::scale(glm::mat4{ 1.0 }, glm::vec3(1, 1, 1));
+
+    RenderObject sphereObj;
+    sphereObj.mesh = &sphere;
+    sphereObj.material = getMaterial("defaultMaterial");
+    sphereObj.modelMatrix = translation * scale;
+
+    renderables.push_back(sphereObj);
 };
 
 void Renderer::uploadMesh(Mesh &mesh) {
@@ -749,8 +858,10 @@ void Renderer::draw(){
     memcpy(data, &cameraData, sizeof(GPUCameraData));
     vmaUnmapMemory(allocator, getCurrentFrame().cameraBuffer.allocation);
 
-    uint64_t timeout = UINT64_MAX;
+    // wait for 1 seconds max
+    uint64_t timeout = 1e9;
 
+    // get current frame to render image to
     FrameData& currentFrame = getCurrentFrame();
 
     // wait for gpu to finish rendering and signal us on render fence
@@ -762,14 +873,21 @@ void Renderer::draw(){
     // get image index
     uint32_t swapchainImageIndex;
     VkResult res = vkAcquireNextImageKHR(device, swapchain, timeout, currentFrame.presentSemaphore, VK_NULL_HANDLE, &swapchainImageIndex);
-    if(res == VK_ERROR_OUT_OF_DATE_KHR){
-        // swapchain is no longer compatible
-        recreateSwapchain();
-        return;
-    }else if(res != VK_SUCCESS && res != VK_SUBOPTIMAL_KHR){
-        std::cerr << "[ERROR] Failed to get next image index" << std::endl;
-        abort();
-    }
+
+    do {
+        if(res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR || framebufferResized){
+            // swapchain is no longer compatible
+            recreateSwapchain();
+            framebufferResized = false;
+
+            // acquire image index again
+            // previous swapchain image index is invalid
+            res = vkAcquireNextImageKHR(device, swapchain, timeout, currentFrame.presentSemaphore, VK_NULL_HANDLE, &swapchainImageIndex);
+        }else if(res != VK_SUCCESS){
+            std::cerr << "[ERROR] Failed to get next image index" << std::endl;
+            abort();
+        }
+    } while((res == VK_ERROR_OUT_OF_DATE_KHR) || (res == VK_SUBOPTIMAL_KHR) || res != VK_SUCCESS);
 
     // now that we are sure that the commands finished executing, we can safely reset the command buffer to begin recording again.
     VKCHECK(vkResetCommandBuffer(currentFrame.commandBuffer, 0));
@@ -823,6 +941,30 @@ void Renderer::draw(){
     // this is to send camera data per frame
     vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, meshPipelineLayout, 0, 1, &currentFrame.globalDescriptorSet, 0, nullptr);
 
+    // // get updated swapchain image extent
+    // int w,h;
+    // SDL_GetWindowSize(window, &w, &h);
+    // swapchainImageExtent.width = w;
+    // swapchainImageExtent.height = h;
+
+    // set dynamic viewport
+    VkViewport viewport = {
+        .x = 0.f,
+        .y = 0.f,
+        .width = static_cast<float>(swapchainImageExtent.width),
+        .height = static_cast<float>(swapchainImageExtent.height),
+        .minDepth = 0.f,
+        .maxDepth = 1.f
+    };
+    vkCmdSetViewport(cmd, 0, 1, &viewport);
+
+    // scissor to cut off part we don't need to render
+    VkRect2D scissor = {
+        .offset = {0, 0},
+        .extent = swapchainImageExtent
+    };
+    vkCmdSetScissor(cmd, 0, 1, &scissor);
+
     // draw renderables
     drawObjects(cmd, renderables.data(), renderables.size());
 
@@ -872,7 +1014,6 @@ void Renderer::draw(){
     res = vkQueuePresentKHR(presentQueue, &presentInfo);
     if(res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR || framebufferResized){
         // swapchain is no longer compatible
-        // recreate one
         recreateSwapchain();
         framebufferResized = false;
         return;
@@ -1052,26 +1193,35 @@ void Renderer::initGraphicsPipeline(){
     pipelineBuilder.vertexInputInfo.pVertexBindingDescriptions = vertexDescription.bindings.data();
     pipelineBuilder.vertexInputInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(vertexDescription.bindings.size());
 
-
     // input assembly is how to use given input and assemble to draw something
     // we are use input array as a list triangles
     pipelineBuilder.inputAssembly = defaultPipelineInputAssemblyStateCreateInfo(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 
-    // defines visible volume
-    pipelineBuilder.viewport = {
-        .x = 0.f,
-        .y = 0.f,
-        .width = static_cast<float>(swapchainImageExtent.width),
-        .height = static_cast<float>(swapchainImageExtent.height),
-        .minDepth = 0.f,
-        .maxDepth = 1.f
-    };
+    /*
+     * Dynamic is using dynamic viewport and scissors at the moment.
+     * This means that below data will be ignored.
+     * Also, it is updating viewport and scissor every frame.
 
-    // scissor to cut off part we don't need to render
-    pipelineBuilder.scissor = {
-        .offset = {0, 0},
-        .extent = swapchainImageExtent
-    };
+     // defines visible volume
+     pipelineBuilder.viewport = {
+     .x = 0.f,
+     .y = 0.f,
+     .width = static_cast<float>(swapchainImageExtent.width),
+     .height = static_cast<float>(swapchainImageExtent.height),
+     .minDepth = 0.f,
+     .maxDepth = 1.f
+     };
+
+     // scissor to cut off part we don't need to render
+     pipelineBuilder.scissor = {
+     .offset = {0, 0},
+     .extent = swapchainImageExtent
+     };
+     */
+
+    // dynamic by default uses dynamic viewport and scissor states
+    std::vector<VkDynamicState> dynamicStateEnables = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+    pipelineBuilder.dynamicState = defaultPipelineDynamicStateCreateInfo(dynamicStateEnables);
 
     // configure rasterizer to draw filled triangles
     pipelineBuilder.rasterizer = defaultPipelineRasterizationStateCreateInfo(VK_POLYGON_MODE_FILL);
@@ -1100,10 +1250,6 @@ void Renderer::initGraphicsPipeline(){
     mainDeletionQueue.push_function([=](){
         // destroy pipeline layout
         vkDestroyPipelineLayout(device, meshPipelineLayout, nullptr);
-    });
-
-    // detruction of pipeline is required on swapchain recreation
-    swapchainDeletionQueue.push_function([=](){
         // destroy pipeline
         vkDestroyPipeline(device, meshPipeline, nullptr);
     });
@@ -1116,26 +1262,18 @@ void Renderer::recreateSwapchain(){
     // wait for all device operations to complete
     vkDeviceWaitIdle(device);
 
+    // first create new swapchain
+    // this will make use of current swapchain to create a new one
+    createSwapchain();
+
     // cleanup relevan objects
     cleanupSwapchain();
 
     // create relevant objects
-    createSwapchain();
     createImageViews();
     createDepthImage();
     initRenderPass();
     createFramebuffers();
-
-    // change viewport and scissor and create pipeline
-    pipelineBuilder.viewport.width = swapchainImageExtent.width;
-    pipelineBuilder.viewport.height = swapchainImageExtent.height;
-    pipelineBuilder.scissor.extent = swapchainImageExtent;
-    meshPipeline = pipelineBuilder.buildPipeline(device, renderPass);
-    assert(meshPipeline && "FAILED TO RE-BUILD PIPELINE");
-
-    swapchainDeletionQueue.push_function([=](){
-        vkDestroyPipeline(device, meshPipeline, nullptr);
-    });
 }
 
 // cleanup vulkan structures that need to recreated for every swapchain recreate call
@@ -1144,6 +1282,11 @@ void Renderer::cleanupSwapchain(){
     for(uint32_t i = 0; i < bufferingSize; i++){
         vkResetCommandPool(device, frames[i].commandPool, 0);
     }
+
+    // no need to destroy old swapchain as we'll be using it
+    // for new swapchain creation and this means most of the resources will be reused
+    // this means images and other things too
+    // if we destroy old swapchain then the images and other resources will get destroyed too!
 
     // execute all deletors on swapchain deletion queue
     swapchainDeletionQueue.flush();

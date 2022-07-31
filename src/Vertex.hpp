@@ -18,7 +18,7 @@ struct Vertex{
     glm::vec3 color;
     glm::vec3 normal;
 
-   	static VertexInputDescription getVertexDescription();
+   static VertexInputDescription getVertexDescription();
 };
 
 #endif//VERTEX_HPP
