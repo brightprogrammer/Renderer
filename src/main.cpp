@@ -38,7 +38,7 @@ int main(){
     // change in time from last frame
     float deltaTime;
 
-    float fieldOfView = 70.f;
+    float fieldOfView = 60.f;
     float aspectRatio = (float)WINDOW_WIDTH/(float)WINDOW_HEIGHT;
     Camera camera(fieldOfView, aspectRatio, glm::vec3(0, 0, -20), -Camera::YAxis, Camera::ZAxis);
 

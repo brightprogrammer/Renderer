@@ -699,19 +699,19 @@ void Renderer::initSyncStructures(){
 
 // load mesh
 void Renderer::loadMeshes(){
-    // mesh.loadFromObj("../assets/koenigsegg.obj");
-    // uploadMesh(mesh);
+    mesh.loadFromObj("../assets/InteriorTest.obj");
+    uploadMesh(mesh);
 
-    // meshes["car"] = mesh;
+    meshes["car"] = mesh;
 
     glm::vec3 pos = {-10, 0, 10};
-    glm::vec3 scale = {0.2, 0.2, 0.2};
+    glm::vec3 scale = {4, 4, 4};
     glm::vec3 rotAxis = {1, 0, 0};
-    float rotAngle = 45;
+    float rotAngle = 0;
 
-    // RenderObject obj(getMesh("car"), getMaterial("defaultMaterial"),
-    //                  pos, scale, rotAxis, rotAngle);
-    // renderables.push_back(obj);
+    RenderObject obj(getMesh("car"), getMaterial("defaultMaterial"),
+                     pos, scale, rotAxis, rotAngle);
+    renderables.push_back(obj);
 
 
     // change object attributes

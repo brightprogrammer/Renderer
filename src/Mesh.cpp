@@ -82,19 +82,12 @@ void createSphereMesh(Mesh& mesh, uint32_t slices, uint32_t circles, float radiu
     float verticalAngleStep = PI / circles;
     float horizontalAngleStep = 2*PI / slices;
 
-    float r = radius;
-    float baseFactor = 0.5f;
-
     for(uint32_t s = 0; s < slices; s++){
-        radius = r*(sin(s) + cos(s));
         Vertex v1, v2, v3;
 
         // generate vertices for topmost circle
-        radius = r;
         v1.position = sphericalToCartesian(radius, 0, 0);
-        radius = r*baseFactor + r*(sin(s*horizontalAngleStep) + cos(verticalAngleStep));
         v2.position = sphericalToCartesian(radius, s*horizontalAngleStep, verticalAngleStep);
-        radius = r*baseFactor + r*(sin((s+1)*horizontalAngleStep) + cos(verticalAngleStep));
         v3.position = sphericalToCartesian(radius, (s+1)*horizontalAngleStep, verticalAngleStep);
 
         // normal is just the normalized position in this case
@@ -136,13 +129,9 @@ void createSphereMesh(Mesh& mesh, uint32_t slices, uint32_t circles, float radiu
             Vertex v1, v2, v3, v4;
 
             // calculate position of these points
-            radius = r*baseFactor + r*(sin(s*horizontalAngleStep) + cos(c*verticalAngleStep));
             v1.position = sphericalToCartesian(radius, s*horizontalAngleStep, c*verticalAngleStep);
-            radius = r*baseFactor + r*(sin((s+1)*horizontalAngleStep) + cos(c*verticalAngleStep));
             v2.position = sphericalToCartesian(radius, (s+1)*horizontalAngleStep, c*verticalAngleStep);
-            radius = r*baseFactor + r*(sin((s+1)*horizontalAngleStep) + cos((c+1)*verticalAngleStep));
             v3.position = sphericalToCartesian(radius, (s+1)*horizontalAngleStep, (c+1)*verticalAngleStep);
-            radius = r*baseFactor + r*(sin(s*horizontalAngleStep) + cos((c+1)*verticalAngleStep));
             v4.position = sphericalToCartesian(radius, s*horizontalAngleStep, (c+1)*verticalAngleStep);
 
             // normal is just the normalized position in this case
