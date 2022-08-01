@@ -40,7 +40,7 @@ int main(){
 
     float fieldOfView = 70.f;
     float aspectRatio = (float)WINDOW_WIDTH/WINDOW_HEIGHT;
-    Camera camera(fieldOfView, aspectRatio, glm::vec3(-20, -20, -20), Camera::ZAxis + Camera::YAxis + Camera::XAxis, Camera::YAxis);
+    Camera camera(fieldOfView, aspectRatio, glm::vec3(0, 0, -20), -Camera::YAxis, Camera::ZAxis);
 
     glm::vec3 move;
     glm::vec2 rotation;

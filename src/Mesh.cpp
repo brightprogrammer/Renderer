@@ -37,8 +37,8 @@ ReturnCode Mesh::loadFromObj(const char *filename){
         size_t index_offset = 0;
         for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) {
 
-            //hardcode loading to triangles
-            int fv = 3;
+            // hardcode loading to triangles
+            size_t fv = 3;
 
             // Loop over vertices in the face.
             for (size_t v = 0; v < fv; v++) {
@@ -102,8 +102,8 @@ void createSphereMesh(Mesh& mesh, uint32_t slices, uint32_t circles, float radiu
 
         // store triangle
         mesh.vertices.push_back(v1);
-        mesh.vertices.push_back(v3);
         mesh.vertices.push_back(v2);
+        mesh.vertices.push_back(v3);
 
         // generate vertices for bottom-most circle
         v1.position = sphericalToCartesian(radius, 0, PI);
@@ -118,9 +118,9 @@ void createSphereMesh(Mesh& mesh, uint32_t slices, uint32_t circles, float radiu
         // color already set
 
         // store triangle
-        mesh.vertices.push_back(v1);
-        mesh.vertices.push_back(v2);
         mesh.vertices.push_back(v3);
+        mesh.vertices.push_back(v2);
+        mesh.vertices.push_back(v1);
     }
 
     // generate vertices leaving topmost circle and bottom-most circle
@@ -147,13 +147,13 @@ void createSphereMesh(Mesh& mesh, uint32_t slices, uint32_t circles, float radiu
 
             // add first triangle to mesh
             mesh.vertices.push_back(v1);
-            mesh.vertices.push_back(v2);
             mesh.vertices.push_back(v4);
+            mesh.vertices.push_back(v2);
 
             // add second triangle to mesh
             mesh.vertices.push_back(v2);
-            mesh.vertices.push_back(v3);
             mesh.vertices.push_back(v4);
+            mesh.vertices.push_back(v3);
         }
     }
 }

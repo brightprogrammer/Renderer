@@ -717,7 +717,7 @@ void Renderer::loadMeshes(){
     // change object attributes
     rotAxis = {0, 1, 1};
     rotAngle = 37;
-    pos = {10, 0, -10};
+    pos = {40, 0, -40};
     obj.setRotation(rotAxis, rotAngle);
     obj.setScale({1, 1, 1});
     obj.setPosition(pos);
@@ -729,7 +729,7 @@ void Renderer::loadMeshes(){
 
     // create sphere mesh
     uint32_t slices = 100, circles = 100;
-    float radius = 2.f;
+    float radius = 10.f;
     createSphereMesh(sphere, slices, circles, radius);
 
     // upload mesh data to gpu
