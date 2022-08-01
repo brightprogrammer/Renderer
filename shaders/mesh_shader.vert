@@ -26,16 +26,16 @@ void main(){
                   pushConstants.objectModelMatrix *
                   vec4(vPosition, 1.0f);
 
-    vec3 lightColor = vec3(1.0f, 1.0f, 1.0f);
-    vec3 lightPos = vec3(10, 10, 10);
+    vec3 lightColor = vec3(0.25, 0.5, 1);
+    vec3 lightPos = vec3(3, 4, 5);
 
     float ambientStrength = 0.1;
     vec3 ambient = ambientStrength * lightColor;
 
-    vec3 Normal = mat3(transpose(inverse(pushConstants.objectModelMatrix))) * vNormal;
+    vec3 Normal = mat3(pushConstants.objectModelMatrix) * vNormal;
     vec3 fragPos = vec3(pushConstants.objectModelMatrix * vec4(vPosition, 1.f));
     vec3 lightDir = normalize(lightPos - fragPos);
-    float diff = max(dot(Normal, lightDir), 0.0);
+    float diff = max(dot(vNormal, lightDir), 0.0);
     vec3 diffuse = diff * lightColor;
 
     vec3 result = (ambient + diffuse) * vColor;

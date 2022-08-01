@@ -63,15 +63,24 @@ public:
     /// glm::vec3 alias for x, y and z axis
     static inline const glm::vec3 XAxis = glm::vec3(1, 0, 0), YAxis = glm::vec3(0, 1, 0), ZAxis = glm::vec3(0, 0, 1);
 
+    /// get camera position
+    inline const glm::vec3& getPosition() const { return position; }
+
+    // get camera up direction
+    inline const glm::vec3& getUpDirection() const { return up; }
+
+    // get camera front direction
+    inline const glm::vec3& getFrontDirection() const { return front; }
+
 private:
-    float aspectRatio;
     float fieldOfView = 70.f;
+    float aspectRatio = 16.f/9;
     float nearPlane = 0.1f;
     float farPlane = 200.f;
 
     glm::vec3 position = glm::vec3(0); // origin
-    glm::vec3 up = glm::vec3(0, 1, 0); // y-axis
-    glm::vec3 front = glm::vec3(0, 0, 1); // z-axis
+    glm::vec3 up = YAxis; // y-axis
+    glm::vec3 front = ZAxis; // z-axis
 
     // camera view and projection matrices
     glm::mat4 viewMatrix, projectionMatrix;

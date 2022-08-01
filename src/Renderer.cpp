@@ -699,29 +699,29 @@ void Renderer::initSyncStructures(){
 
 // load mesh
 void Renderer::loadMeshes(){
-    mesh.loadFromObj("../assets/koenigsegg.obj");
-    uploadMesh(mesh);
+    // mesh.loadFromObj("../assets/koenigsegg.obj");
+    // uploadMesh(mesh);
 
-    meshes["car"] = mesh;
+    // meshes["car"] = mesh;
 
     glm::vec3 pos = {-10, 0, 10};
     glm::vec3 scale = {0.2, 0.2, 0.2};
     glm::vec3 rotAxis = {1, 0, 0};
     float rotAngle = 45;
 
-    RenderObject obj(getMesh("car"), getMaterial("defaultMaterial"),
-                     pos, scale, rotAxis, rotAngle);
-    renderables.push_back(obj);
+    // RenderObject obj(getMesh("car"), getMaterial("defaultMaterial"),
+    //                  pos, scale, rotAxis, rotAngle);
+    // renderables.push_back(obj);
 
 
     // change object attributes
-    rotAxis = {0, 1, 1};
-    rotAngle = 37;
-    pos = {40, 0, -40};
-    obj.setRotation(rotAxis, rotAngle);
-    obj.setScale({1, 1, 1});
-    obj.setPosition(pos);
-    renderables.push_back(obj);
+    // rotAxis = {0, 1, 1};
+    // rotAngle = 37;
+    // pos = {40, 0, -40};
+    // obj.setRotation(rotAxis, rotAngle);
+    // obj.setScale({1, 1, 1});
+    // obj.setPosition(pos);
+    // renderables.push_back(obj);
 
     // create sphere mesh
     meshes["sphere"] = Mesh{};
@@ -729,18 +729,36 @@ void Renderer::loadMeshes(){
 
     // create sphere mesh
     uint32_t slices = 100, circles = 100;
-    float radius = 10.f;
-    createSphereMesh(sphere, slices, circles, radius);
+    float radius = 1.f;
+    createSphereMesh(sphere, slices, circles, radius, {1, 0.2, 0.8});
 
     // upload mesh data to gpu
     uploadMesh(sphere);
 
     // create renderable object
-    pos = {10, -10, -10};
+    pos = {0, 5, 0};
     RenderObject sphereObj(getMesh("sphere"), getMaterial("defaultMaterial"));
     sphereObj.setPosition(pos);
 
     renderables.push_back(sphereObj);
+
+    // create a plane
+    meshes["plane"] = Mesh{};
+    Mesh& plane = meshes["plane"];
+
+    float width = 100;
+    float height = 100;
+    createRectangleMesh(plane, width, height);
+
+    // upload mesh data
+    uploadMesh(plane);
+
+    // create renderable object
+    RenderObject planeObj(getMesh("plane"), getMaterial("defaultMaterial"));
+    planeObj.setRotation({1, 0 ,0}, -90); // rotate about x axis 90 degrees
+    planeObj.setPosition({0, -10, 0});
+
+    renderables.push_back(planeObj);
 };
 
 void Renderer::uploadMesh(Mesh &mesh) {

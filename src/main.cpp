@@ -32,14 +32,14 @@ int main(){
 
     float linearSpeed = 1000.f;
     float angularSpeed = 20.f;
-    float avgFrameTime = 0.f;
-    size_t frameNumber = 1;
+    float totalFrameTime = 0.f;
+    uint64_t frameNumber = 1;
 
     // change in time from last frame
     float deltaTime;
 
     float fieldOfView = 70.f;
-    float aspectRatio = (float)WINDOW_WIDTH/WINDOW_HEIGHT;
+    float aspectRatio = (float)WINDOW_WIDTH/(float)WINDOW_HEIGHT;
     Camera camera(fieldOfView, aspectRatio, glm::vec3(0, 0, -20), -Camera::YAxis, Camera::ZAxis);
 
     glm::vec3 move;
@@ -50,9 +50,6 @@ int main(){
     KeyboardState keyboard;
     // keep track of mouse state
     MouseState mouse;
-
-    // float mouseX = 0, mouseY = 0;
-    int32_t windowWidth = WINDOW_WIDTH, windowHeight = WINDOW_HEIGHT;
 
     // the game loop
     while(gameIsRunning){
@@ -72,15 +69,16 @@ int main(){
                 gameIsRunning = false;
             }
 
-            if(event.type == SDL_WINDOWEVENT && event.window.type == SDL_WINDOWEVENT_RESIZED){
+            if(event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED){
                 // inform renderer about
                 renderer.windowResized();
 
                 // get window size
+                int windowWidth = 0, windowHeight = 0;
                 SDL_GetWindowSize(window, &windowWidth, &windowHeight);
 
                 // update camera aspect ratio
-                aspectRatio = (float)windowWidth/windowHeight;
+                aspectRatio = static_cast<float>(windowWidth)/windowHeight;
                 camera.setAspectRatio(aspectRatio);
 
                 // update projection matrix in renderer
@@ -127,11 +125,12 @@ int main(){
 
         auto stop = std::chrono::high_resolution_clock::now();;
         deltaTime = std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count();
-        avgFrameTime = avgFrameTime * frameNumber + deltaTime;
-        avgFrameTime /= ++frameNumber;
+        totalFrameTime += deltaTime;
+        frameNumber++;
     }
 
-    std::cout << "Average Frame Time : " << avgFrameTime << std::endl;
+    float avgFrameTime = totalFrameTime / frameNumber;
+    std::cout << "Average Frame Time : " << avgFrameTime << " milliseconds." << std::endl;
 
     // cleanup renderer
     renderer.cleanup();

@@ -11,7 +11,7 @@ Camera::Camera(float fov, float ar)
     viewMatrix = glm::lookAt(position, position + front, up);
 
     // update projection matrix
-    projectionMatrix = glm::perspective(fieldOfView, aspectRatio, nearPlane, farPlane);
+    projectionMatrix = glm::perspective(glm::radians(fieldOfView), aspectRatio, nearPlane, farPlane);
 }
 
 // camera constructor
@@ -21,7 +21,7 @@ Camera::Camera(float fov, float ar, const glm::vec3& pos, const glm::vec3& up, c
     viewMatrix = glm::lookAt(position, position + front, up);
 
     // update projection matrix
-    projectionMatrix = glm::perspective(fieldOfView, aspectRatio, nearPlane, farPlane);
+    projectionMatrix = glm::perspective(glm::radians(fieldOfView), aspectRatio, nearPlane, farPlane);
 }
 
 // update camera orientation and position in space
@@ -54,7 +54,7 @@ void Camera::setAspectRatio(float ar) {
     aspectRatio = ar;
 
     // update projection matrix
-    projectionMatrix = glm::perspective(fieldOfView, aspectRatio, nearPlane, farPlane);
+    projectionMatrix = glm::perspective(glm::radians(fieldOfView), aspectRatio, nearPlane, farPlane);
 }
 
 float Camera::getAspectRatio() const{
@@ -65,7 +65,7 @@ void Camera::setFieldOfView(float fov) {
     fieldOfView = fov;
 
     // update projection matrix
-    projectionMatrix = glm::perspective(fieldOfView, aspectRatio, nearPlane, farPlane);
+    projectionMatrix = glm::perspective(glm::radians(fieldOfView), aspectRatio, nearPlane, farPlane);
 }
 
 float Camera::getFieldOfView() const{

@@ -34,4 +34,13 @@ struct Mesh{
  * */
 void createSphereMesh(Mesh& mesh, uint32_t slices, uint32_t circles, float radius, glm::vec3 color = {0.1f, 0.1f, 0.1f});
 
+/**
+ * @brief Create a rectangle mesh of given width and height.
+ *
+ * @param[out] mesh Mesh object to store vertex data into.
+ * @param[in] width Width of plane
+ * @param[out] height Height of plane
+ * */
+void createRectangleMesh(Mesh& mesh, float width, float height, glm::vec3 color = {0.1f, 0.1f, 0.1f});
+
 #endif//MESH_HPP
