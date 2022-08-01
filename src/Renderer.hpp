@@ -17,19 +17,10 @@
 #include "Common.hpp"
 #include "Vertex.hpp"
 #include "Mesh.hpp"
+#include "Material.hpp"
+#include "RenderObject.hpp"
 
 #include <vulkan/vulkan_core.h>
-
-struct Material {
-    VkPipeline pipeline;
-    VkPipelineLayout pipelineLayout;
-};
-
-struct RenderObject {
-    Mesh* mesh;
-    Material* material;
-    glm::mat4 modelMatrix;
-};
 
 /**
  * @brief Renderer class to handle all rendering operations

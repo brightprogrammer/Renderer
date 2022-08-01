@@ -24,4 +24,14 @@ struct Mesh{
     ReturnCode loadFromObj(const char* filename);
 };
 
+/**
+ * @brief Create a sphere mesh in the given mesh object provided.
+ *
+ * @param[out] mesh Mesh object to store vertex data into.
+ * @param[in] slices Number of vertical lines on sphere.
+ * @param[in] circles Number of horizontal lines on sphere.
+ * @param[in] radius Radius of sphere.
+ * */
+void createSphereMesh(Mesh& mesh, uint32_t slices, uint32_t circles, float radius, glm::vec3 color = {0.1f, 0.1f, 0.1f});
+
 #endif//MESH_HPP

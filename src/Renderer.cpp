@@ -29,8 +29,6 @@
 #include <vector>
 #include <cstdint>
 
-#define PI 3.14159265359
-
 // renderer constructor
 Renderer::Renderer(SDL_Window *window)
      : window(window) {
@@ -706,120 +704,41 @@ void Renderer::loadMeshes(){
 
     meshes["car"] = mesh;
 
-    glm::mat4 translation = glm::translate(glm::mat4{ 1.0 }, glm::vec3(-10, 0, 10));
-    glm::mat4 scale = glm::scale(glm::mat4{ 1.0 }, glm::vec3(0.2, 0.2, 0.2));
+    glm::vec3 pos = {-10, 0, 10};
+    glm::vec3 scale = {0.2, 0.2, 0.2};
+    glm::vec3 rotAxis = {1, 0, 0};
+    float rotAngle = 45;
 
-    RenderObject obj;
-    obj.modelMatrix = translation * scale;
-    obj.mesh = getMesh("car");
-    obj.material = getMaterial("defaultMaterial");
-
+    RenderObject obj(getMesh("car"), getMaterial("defaultMaterial"),
+                     pos, scale, rotAxis, rotAngle);
     renderables.push_back(obj);
 
-    translation = glm::translate(glm::mat4{ 1.0 }, glm::vec3(-40, 0, 40));
-    scale = glm::scale(glm::mat4{ 1.0 }, glm::vec3(1, 1, 1));
-    obj.modelMatrix = translation * scale;
 
+    // change object attributes
+    rotAxis = {0, 1, 1};
+    rotAngle = 37;
+    pos = {10, 0, -10};
+    obj.setRotation(rotAxis, rotAngle);
+    obj.setScale({1, 1, 1});
+    obj.setPosition(pos);
     renderables.push_back(obj);
 
     // create sphere mesh
-    static Mesh sphere;
-    uint32_t slices = 10, circles = 10;
-    float verticalAngleStep = PI / circles;
-    float horizontalAngleStep = 2*PI / slices;
+    meshes["sphere"] = Mesh{};
+    Mesh& sphere = meshes["sphere"];
+
+    // create sphere mesh
+    uint32_t slices = 100, circles = 100;
     float radius = 2.f;
+    createSphereMesh(sphere, slices, circles, radius);
 
-    for(uint32_t s = 0; s < slices; s++){
-        Vertex v1, v2, v3;
-
-        // generate vertices for topmost circle
-        v1.position = sphericalToCartesian(radius, 0, 0);
-        v2.position = sphericalToCartesian(radius, s*horizontalAngleStep, verticalAngleStep);
-        v3.position = sphericalToCartesian(radius, (s+1)*horizontalAngleStep, verticalAngleStep);
-
-        // normal is just the normalized position in this case
-        v1.normal = glm::normalize(v1.position);
-        v2.normal = glm::normalize(v2.position);
-        v3.normal = glm::normalize(v3.position);
-
-        v1.color = v1.normal;
-        v2.color = v2.normal;
-        v3.color = v3.normal;
-
-        // store triangle
-        sphere.vertices.push_back(v1);
-        sphere.vertices.push_back(v3);
-        sphere.vertices.push_back(v2);
-
-        // generate vertices for bottom-most circle
-        v1.position = sphericalToCartesian(radius, 0, PI);
-        v2.position = sphericalToCartesian(radius, s*horizontalAngleStep, (circles-1)*verticalAngleStep);
-        v3.position = sphericalToCartesian(radius, (s+1)*horizontalAngleStep, (circles-1)*verticalAngleStep);
-
-        // normal is just the normalized position in this case
-        v1.normal = glm::normalize(v1.position);
-        v2.normal = glm::normalize(v2.position);
-        v3.normal = glm::normalize(v3.position);
-
-        v1.color = v1.normal;
-        v2.color = v2.normal;
-        v3.color = v3.normal;
-
-        // store triangle
-        sphere.vertices.push_back(v1);
-        sphere.vertices.push_back(v2);
-        sphere.vertices.push_back(v3);
-    }
-
-    // generate vertices leaving topmost circle and bottom-most circle
-    for(uint32_t s = 0; s < slices; s++){
-        for(uint32_t c = 1; c < circles - 1; c++){
-            Vertex v1, v2, v3, v4;
-
-            // calculate position of these points
-            v1.position = sphericalToCartesian(radius, s*horizontalAngleStep, c*verticalAngleStep);
-            v2.position = sphericalToCartesian(radius, (s+1)*horizontalAngleStep, c*verticalAngleStep);
-            v3.position = sphericalToCartesian(radius, (s+1)*horizontalAngleStep, (c+1)*verticalAngleStep);
-            v4.position = sphericalToCartesian(radius, s*horizontalAngleStep, (c+1)*verticalAngleStep);
-
-            // normal is just the normalized position in this case
-            v1.normal = glm::normalize(v1.position);
-            v2.normal = glm::normalize(v2.position);
-            v3.normal = glm::normalize(v3.position);
-            v4.normal = glm::normalize(v4.position);
-
-            // light grey color
-            // v1.color = glm::vec3(0.1, 0.1, 0.1);
-            // v2.color = glm::vec3(0.1, 0.1, 0.1);
-            // v3.color = glm::vec3(0.1, 0.1, 0.1);
-            // v4.color = glm::vec3(0.1, 0.1, 0.1);
-
-            v1.color = v1.normal;
-            v2.color = v2.normal;
-            v3.color = v3.normal;
-            v4.color = v4.normal;
-
-            // add first triangle to mesh
-            sphere.vertices.push_back(v1);
-            sphere.vertices.push_back(v2);
-            sphere.vertices.push_back(v4);
-
-            // add second triangle to mesh
-            sphere.vertices.push_back(v2);
-            sphere.vertices.push_back(v3);
-            sphere.vertices.push_back(v4);
-        }
-    }
-
+    // upload mesh data to gpu
     uploadMesh(sphere);
 
-    translation = glm::translate(glm::mat4{ 1.0 }, glm::vec3(10, 10, -10));
-    scale = glm::scale(glm::mat4{ 1.0 }, glm::vec3(1, 1, 1));
-
-    RenderObject sphereObj;
-    sphereObj.mesh = &sphere;
-    sphereObj.material = getMaterial("defaultMaterial");
-    sphereObj.modelMatrix = translation * scale;
+    // create renderable object
+    pos = {10, -10, -10};
+    RenderObject sphereObj(getMesh("sphere"), getMaterial("defaultMaterial"));
+    sphereObj.setPosition(pos);
 
     renderables.push_back(sphereObj);
 };
@@ -1324,7 +1243,11 @@ AllocatedBuffer Renderer::createBuffer(size_t allocSize, VkBufferUsageFlags usag
 
 // create material and return address
 Material* Renderer::createMaterial(VkPipeline pipeline, VkPipelineLayout layout, const std::string& name){
-    materials[name] = {pipeline, layout};
+    Material m;
+    m.pipeline = pipeline;
+    m.pipelineLayout = layout;
+
+    materials[name] = m;
     return &materials[name];
 }
 
@@ -1362,23 +1285,23 @@ void Renderer::drawObjects(VkCommandBuffer cmd, RenderObject* first, size_t coun
         RenderObject& object = first[i];
 
         // bind new pipeline if and only if it doesn't match the previous one
-        if(object.material != lastMaterial){
-            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, object.material->pipeline);
-            lastMaterial = object.material;
+        if(object.getMaterial() != lastMaterial){
+            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, object.getMaterial()->pipeline);
+            lastMaterial = object.getMaterial();
         }
 
         // send object model matrix for every object
-        pushConstants.objectModelMatrix = object.modelMatrix;
+        pushConstants.objectModelMatrix = object.getModelMatrix();
         vkCmdPushConstants(cmd, meshPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(MeshPushConstants), &pushConstants);
 
         // bind mesh only if it's different from last one
-        if(object.mesh != lastMesh){
+        if(object.getMesh() != lastMesh){
             VkDeviceSize offset = 0;
-            vkCmdBindVertexBuffers(cmd, 0, 1, &object.mesh->vertexBuffer.buffer, &offset);
-            lastMesh = object.mesh;
+            vkCmdBindVertexBuffers(cmd, 0, 1, &object.getMesh()->vertexBuffer.buffer, &offset);
+            lastMesh = object.getMesh();
         }
 
         // finally draw this object
-        vkCmdDraw(cmd, object.mesh->vertices.size(), 1, 0, 0);
+        vkCmdDraw(cmd, object.getMesh()->vertices.size(), 1, 0, 0);
     }
 }

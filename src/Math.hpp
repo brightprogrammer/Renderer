@@ -3,6 +3,8 @@
 
 #include <glm/glm.hpp>
 
+#define PI 3.14159265359
+
 /**
  * @brief Convert point in spherical coordinates to point in cartesian coordinates.
  *

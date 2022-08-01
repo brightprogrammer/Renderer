@@ -97,9 +97,9 @@ int main(){
                 }
 
                 if(keyboard.keyA == KeyState::Pressed){
-                    move.y -= linearSpeed;
-                }else if(keyboard.keyD == KeyState::Pressed){
                     move.y += linearSpeed;
+                }else if(keyboard.keyD == KeyState::Pressed){
+                    move.y -= linearSpeed;
                 }
 
                 if(keyboard.keyX == KeyState::Pressed){
