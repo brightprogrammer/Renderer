@@ -11,7 +11,7 @@
 #include "QueueFamilyData.hpp"
 #include "SurfaceDetails.hpp"
 #include "PipelineBuilder.hpp"
-#include "GPUCameraData.hpp"
+#include "UniformData.hpp"
 #include "vk_mem_alloc.h"
 #include "FrameData.hpp"
 #include "Common.hpp"
@@ -44,8 +44,8 @@ public:
     // it'll result in crash
     void windowResized();
 
-    // camera data
-    GPUCameraData cameraData;
+    // uniform data sent to shaders per frame
+    UniformData uniformData;
 
     // array of renderable objects
     std::vector<RenderObject> renderables;

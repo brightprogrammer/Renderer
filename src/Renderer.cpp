@@ -1,7 +1,7 @@
 #include "Renderer.hpp"
 #include "Device.hpp"
 #include "Config.hpp"
-#include "GPUCameraData.hpp"
+#include "UniformData.hpp"
 #include "Initializers.hpp"
 #include "QueueFamilyData.hpp"
 #include "ReturnCode.hpp"
@@ -11,7 +11,7 @@
 #include "VkResultString.hpp"
 #include "Swapchain.hpp"
 #include "Shader.hpp"
-#include "MeshPushConstants.hpp"
+#include "PushData.hpp"
 #include "Math.hpp"
 
 #include <SDL2/SDL_events.h>
@@ -491,7 +491,7 @@ void Renderer::createCommandPool(){
                                      VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
     // for each frame in flight
-    for(int i = 0; i < bufferingSize; i++){
+    for(uint32_t i = 0; i < bufferingSize; i++){
         // create command pool
         VKCHECK(vkCreateCommandPool(device, &commandPoolInfo, nullptr, &frames[i].commandPool));
 
@@ -699,19 +699,19 @@ void Renderer::initSyncStructures(){
 
 // load mesh
 void Renderer::loadMeshes(){
-    mesh.loadFromObj("../assets/InteriorTest.obj");
-    uploadMesh(mesh);
+    // mesh.loadFromObj("../assets/InteriorTest.obj");
+    // uploadMesh(mesh);
 
-    meshes["car"] = mesh;
+    // meshes["car"] = mesh;
 
-    glm::vec3 pos = {-10, 0, 10};
+    glm::vec3 pos = {2, 2, 2};
     glm::vec3 scale = {4, 4, 4};
     glm::vec3 rotAxis = {1, 0, 0};
     float rotAngle = 0;
 
-    RenderObject obj(getMesh("car"), getMaterial("defaultMaterial"),
-                     pos, scale, rotAxis, rotAngle);
-    renderables.push_back(obj);
+    // RenderObject obj(getMesh("car"), getMaterial("defaultMaterial"),
+    //                  pos, scale, rotAxis, rotAngle);
+    // renderables.push_back(obj);
 
 
     // change object attributes
@@ -730,35 +730,35 @@ void Renderer::loadMeshes(){
     // create sphere mesh
     uint32_t slices = 100, circles = 100;
     float radius = 1.f;
-    createSphereMesh(sphere, slices, circles, radius, {1, 0.2, 0.8});
+    createSphereMesh(sphere, slices, circles, radius, {1, 1, 1});
 
     // upload mesh data to gpu
     uploadMesh(sphere);
 
     // create renderable object
-    pos = {0, 5, 0};
+    pos = {0, 0, 4};
     RenderObject sphereObj(getMesh("sphere"), getMaterial("defaultMaterial"));
     sphereObj.setPosition(pos);
 
     renderables.push_back(sphereObj);
 
-    // create a plane
-    meshes["plane"] = Mesh{};
-    Mesh& plane = meshes["plane"];
+    // // create a plane
+    // meshes["plane"] = Mesh{};
+    // Mesh& plane = meshes["plane"];
 
-    float width = 100;
-    float height = 100;
-    createRectangleMesh(plane, width, height);
+    // float width = 100;
+    // float height = 100;
+    // createRectangleMesh(plane, width, height);
 
-    // upload mesh data
-    uploadMesh(plane);
+    // // upload mesh data
+    // uploadMesh(plane);
 
-    // create renderable object
-    RenderObject planeObj(getMesh("plane"), getMaterial("defaultMaterial"));
-    planeObj.setRotation({1, 0 ,0}, -90); // rotate about x axis 90 degrees
-    planeObj.setPosition({0, -10, 0});
+    // // create renderable object
+    // RenderObject planeObj(getMesh("plane"), getMaterial("defaultMaterial"));
+    // planeObj.setRotation({1, 0 ,0}, -90); // rotate about x axis 90 degrees
+    // planeObj.setPosition({0, -10, 0});
 
-    renderables.push_back(planeObj);
+    // renderables.push_back(planeObj);
 };
 
 void Renderer::uploadMesh(Mesh &mesh) {
@@ -791,9 +791,9 @@ void Renderer::draw(){
     // update camera data every frame
     // camera data is modified per frame in the main loop depending on the events triggered
     void* data;
-    vmaMapMemory(allocator, getCurrentFrame().cameraBuffer.allocation, &data);
-    memcpy(data, &cameraData, sizeof(GPUCameraData));
-    vmaUnmapMemory(allocator, getCurrentFrame().cameraBuffer.allocation);
+    vmaMapMemory(allocator, getCurrentFrame().uniformBuffer.allocation, &data);
+    memcpy(data, &uniformData, sizeof(UniformData));
+    vmaUnmapMemory(allocator, getCurrentFrame().uniformBuffer.allocation);
 
     // wait for 1 seconds max
     uint64_t timeout = 1e9;
@@ -963,6 +963,7 @@ void Renderer::draw(){
 }
 
 // initialize descriptor sets
+// descriptor sets are used to send uniform data
 void Renderer::initDescriptors(){
     // ALGORTIHM :
     // create descriptor pool (with different sizes for each descriptor set)
@@ -994,16 +995,16 @@ void Renderer::initDescriptors(){
     });
 
     // give information about which binding to use to r/w data
-    VkDescriptorSetLayoutBinding camDataBinding = {};
+    VkDescriptorSetLayoutBinding uniformDataBinding = {};
     // send data through binding 0
-    camDataBinding.binding = 0;
+    uniformDataBinding.binding = 0;
     // each binding can send an array of descriptors
     // we are sending only one camera data and not an array
-    camDataBinding.descriptorCount = 1;
+    uniformDataBinding.descriptorCount = 1;
     // what type of data will be r/w from this binding
-    camDataBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    uniformDataBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     // which shader stage will read from this binding?
-    camDataBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    uniformDataBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
     // give infromation about how the descriptors will be passed to shaders
     VkDescriptorSetLayoutCreateInfo setLayoutInfo = {};
@@ -1013,8 +1014,8 @@ void Renderer::initDescriptors(){
     setLayoutInfo.flags = 0;
     // we are sending data through only one binding
     setLayoutInfo.bindingCount = 1;
-    // point to camera buffer binding
-    setLayoutInfo.pBindings = &camDataBinding;
+    // point to uniform buffer binding
+    setLayoutInfo.pBindings = &uniformDataBinding;
 
     // create descriptor set layout
     VKCHECK(vkCreateDescriptorSetLayout(device, &setLayoutInfo, nullptr, &globalDescriptorSetLayout));
@@ -1026,8 +1027,8 @@ void Renderer::initDescriptors(){
 
     // allocate buffers, allocate one descriptor set per frame and write to each descriptor set with camera data
     for(uint32_t i = 0; i < bufferingSize; i++){
-        // create buffer that the camera descriptor will point to
-        frames[i].cameraBuffer = createBuffer(sizeof(GPUCameraData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+        // create buffer that the uniform descriptor will point to
+        frames[i].uniformBuffer = createBuffer(sizeof(UniformData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
         // allocate descriptor set per frame data
         VkDescriptorSetAllocateInfo setAllocInfo = {};
@@ -1048,12 +1049,12 @@ void Renderer::initDescriptors(){
         // data about which buffer to point to
         VkDescriptorBufferInfo bufferInfo = {};
         // point to this buffer
-        bufferInfo.buffer = frames[i].cameraBuffer.buffer;
+        bufferInfo.buffer = frames[i].uniformBuffer.buffer;
         // what offset in this buffer?
         // this means we can allocate a large buffer and write at different places
         bufferInfo.offset = 0; // beginning
         // size of buffer after offset
-        bufferInfo.range = sizeof(GPUCameraData);
+        bufferInfo.range = sizeof(UniformData);
 
         // where, how and what to write?
         VkWriteDescriptorSet setWrite = {};
@@ -1098,7 +1099,7 @@ void Renderer::initGraphicsPipeline(){
     // this push constant will be sent at vertex stage
     VkPushConstantRange pushConstant = {};
     pushConstant.offset = 0;
-    pushConstant.size = sizeof(MeshPushConstants);
+    pushConstant.size = sizeof(PushData);
     pushConstant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
     pipelineLayoutInfo.pushConstantRangeCount = 1;
@@ -1138,22 +1139,6 @@ void Renderer::initGraphicsPipeline(){
      * Dynamic is using dynamic viewport and scissors at the moment.
      * This means that below data will be ignored.
      * Also, it is updating viewport and scissor every frame.
-
-     // defines visible volume
-     pipelineBuilder.viewport = {
-     .x = 0.f,
-     .y = 0.f,
-     .width = static_cast<float>(swapchainImageExtent.width),
-     .height = static_cast<float>(swapchainImageExtent.height),
-     .minDepth = 0.f,
-     .maxDepth = 1.f
-     };
-
-     // scissor to cut off part we don't need to render
-     pipelineBuilder.scissor = {
-     .offset = {0, 0},
-     .extent = swapchainImageExtent
-     };
      */
 
     // dynamic by default uses dynamic viewport and scissor states
@@ -1296,7 +1281,7 @@ void Renderer::drawObjects(VkCommandBuffer cmd, RenderObject* first, size_t coun
     Material* lastMaterial = nullptr;
 
     // data to be sent for every object
-    MeshPushConstants pushConstants;
+    PushData pushConstants;
 
     for(size_t i = 0; i < count; i++){
         // get object data to be drawn
@@ -1310,7 +1295,7 @@ void Renderer::drawObjects(VkCommandBuffer cmd, RenderObject* first, size_t coun
 
         // send object model matrix for every object
         pushConstants.objectModelMatrix = object.getModelMatrix();
-        vkCmdPushConstants(cmd, meshPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(MeshPushConstants), &pushConstants);
+        vkCmdPushConstants(cmd, meshPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushData), &pushConstants);
 
         // bind mesh only if it's different from last one
         if(object.getMesh() != lastMesh){

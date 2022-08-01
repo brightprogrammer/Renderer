@@ -27,6 +27,10 @@ int main(){
     // create renderer
     Renderer renderer(window);
 
+    renderer.uniformData.lightPosition = {1, 1, 1};
+    renderer.uniformData.lightColor = {1, 0.5, 0.25, 2};
+    renderer.uniformData.ambientLightColor = {1, 1, 1, 0.02};
+
     // set to false when need to exit game loop
     bool gameIsRunning = true;
 
@@ -40,16 +44,19 @@ int main(){
 
     float fieldOfView = 60.f;
     float aspectRatio = (float)WINDOW_WIDTH/(float)WINDOW_HEIGHT;
-    Camera camera(fieldOfView, aspectRatio, glm::vec3(0, 0, -20), -Camera::YAxis, Camera::ZAxis);
+    Camera camera(fieldOfView, aspectRatio, glm::vec3(0, 0, 0), Camera::YAxis, Camera::ZAxis);
 
     glm::vec3 move;
     glm::vec2 rotation;
-    renderer.cameraData.projection = camera.getProjectionMatrix();
+    glm::mat4 projectionMatrix = camera.getProjectionMatrix();
+    glm::mat4 viewMatrix;
 
     // keep track of keyboard state
     KeyboardState keyboard;
     // keep track of mouse state
     MouseState mouse;
+
+    float radius = 5;
 
     // the game loop
     while(gameIsRunning){
@@ -82,7 +89,7 @@ int main(){
                 camera.setAspectRatio(aspectRatio);
 
                 // update projection matrix in renderer
-                renderer.cameraData.projection = camera.getProjectionMatrix();
+                projectionMatrix = camera.getProjectionMatrix();
             }
 
             // get keyboard state for each event
@@ -117,8 +124,16 @@ int main(){
         // update camera orientation and location
         camera.update(move, rotation, deltaTime/100);
 
+        // update light position
+        renderer.uniformData.lightPosition = {radius * sin(glm::radians(float(frameNumber))), radius * cos(glm::radians(float(frameNumber))), 0};
+
+        // update camera position
+        renderer.uniformData.viewPosition = camera.getPosition();
+
         // update camera view
-        renderer.cameraData.view = camera.getViewMatrix();
+        viewMatrix = camera.getViewMatrix();
+        // update uniform data
+        renderer.uniformData.projectionViewMatrix = projectionMatrix * viewMatrix;
 
         // draw to screen
         renderer.draw();

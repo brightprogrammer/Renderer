@@ -14,7 +14,7 @@ struct FrameData{
     VkCommandBuffer commandBuffer;
 
     // camera data (uniform data) per frame
-    AllocatedBuffer cameraBuffer;
+    AllocatedBuffer uniformBuffer;
     VkDescriptorSet globalDescriptorSet;
 };
 

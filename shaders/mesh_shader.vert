@@ -9,35 +9,49 @@ layout (location = 2) in vec3 vNormal;
 layout (location = 0) out vec3 outColor;
 
 // get camera data
-layout(set = 0, binding = 0) uniform CameraData{
-    mat4 view;
-    mat4 projection;
-} cameraData;
+layout(set = 0, binding = 0) uniform UniformData {
+    mat4 projectionViewMatrix;
+    vec4 ambientLightColor;
+    vec3 lightPosition;
+    float padding1;
+    vec4 lightColor;
+    vec3 viewPosition;
+    float specularStrength;
+} uniformData;
 
 // push constants
 layout( push_constant ) uniform constants {
-    mat4 objectModelMatrix;
-} pushConstants;
+    mat4 modelMatrix;
+    mat4 normalMatrix;
+} pushData;
 
 void main(){
-    // calculate transformed position
-    gl_Position = cameraData.projection *
-                  cameraData.view *
-                  pushConstants.objectModelMatrix *
-                  vec4(vPosition, 1.0f);
+    // calculate position of vertex in world space
+    vec4 vPositionWorldSpace = pushData.modelMatrix * vec4(vPosition, 1.f);
 
-    vec3 lightColor = vec3(0.25, 0.5, 1);
-    vec3 lightPos = vec3(3, 4, 5);
+    // calculate normal in world space
+    vec3 vNormalWorldSpace = normalize(mat3(pushData.modelMatrix) * vNormal);
 
-    float ambientStrength = 0.1;
-    vec3 ambient = ambientStrength * lightColor;
+    // calculate direction to light from vertex
+    vec3 directionToLight = uniformData.lightPosition - vPositionWorldSpace.xyz;
 
-    vec3 Normal = mat3(pushConstants.objectModelMatrix) * vNormal;
-    vec3 fragPos = vec3(pushConstants.objectModelMatrix * vec4(vPosition, 1.f));
-    vec3 lightDir = normalize(lightPos - fragPos);
-    float diff = max(dot(vNormal, lightDir), 0.0);
-    vec3 diffuse = diff * lightColor;
+    // calculate direction from vertex to viewer (camera)
+    vec3 viewDir = normalize(uniformData.viewPosition - vPositionWorldSpace.xyz);
+    // and reflect with given normal
+    vec3 reflectDir = normalize(reflect(-directionToLight, vNormalWorldSpace));
 
-    vec3 result = (ambient + diffuse) * vColor;
-    outColor = result;
+    // for point source we need to take into account the attenuation factor
+    // attenuation is decaying of light intensity as distance from lightsource increases
+    float attenuation = 1.0 / dot(directionToLight, directionToLight); // distance squared
+
+    // calculate light color after adjusting for intensity
+    vec3 lightColor = uniformData.lightColor.xyz * uniformData.lightColor.w * attenuation;
+    vec3 ambientLight = uniformData.ambientLightColor.xyz * uniformData.ambientLightColor.w;
+    vec3 diffuseLight = lightColor * max(dot(vNormalWorldSpace, normalize(directionToLight)), 0);
+    vec3 specularLight = uniformData.specularStrength * pow(max(dot(viewDir, reflectDir), 0), 32) * lightColor;
+
+    // calculate position in eye space
+    gl_Position = uniformData.projectionViewMatrix * vPositionWorldSpace;
+
+    outColor = (diffuseLight + ambientLight + specularLight) * vColor;
 }
