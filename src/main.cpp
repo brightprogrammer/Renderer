@@ -19,6 +19,7 @@
 #include "MouseState.hpp"
 
 SDL_Window* createWindow();
+bool handleEvents();
 
 int main(){
     // create window to render to
@@ -29,21 +30,23 @@ int main(){
 
     renderer.uniformData.lightPosition = {1, 1, 1};
     renderer.uniformData.lightColor = {1, 0.5, 0.25, 2};
-    renderer.uniformData.ambientLightColor = {1, 1, 1, 0.02};
+    renderer.uniformData.ambientLightColor = {0.25, 0.5 , 1, 0.08};
+    renderer.uniformData.specularStrength = 4;
 
     // set to false when need to exit game loop
     bool gameIsRunning = true;
 
-    float linearSpeed = 1000.f;
-    float angularSpeed = 20.f;
+    float linearSpeed = 10.f;
+    float angularSpeed = 0.1f;
     float totalFrameTime = 0.f;
-    uint64_t frameNumber = 1;
+    uint64_t frameNumber = 0;
 
     // change in time from last frame
     float deltaTime;
 
-    float fieldOfView = 60.f;
-    float aspectRatio = (float)WINDOW_WIDTH/(float)WINDOW_HEIGHT;
+    float fieldOfView = 45.f;
+    int windowWidth = WINDOW_WIDTH, windowHeight = WINDOW_HEIGHT;
+    float aspectRatio = static_cast<float>(windowWidth)/windowHeight;
     Camera camera(fieldOfView, aspectRatio, glm::vec3(0, 0, 0), Camera::YAxis, Camera::ZAxis);
 
     glm::vec3 move;
@@ -57,6 +60,52 @@ int main(){
     MouseState mouse;
 
     float radius = 5;
+
+    Mesh apple;
+    Material defaultMaterial = *renderer.getMaterial("defaultMaterial");
+
+    if(apple.loadFromObj("../assets/apple.obj") != FAILED){
+        renderer.uploadMesh(apple);
+
+        RenderObject obj(&apple, &defaultMaterial);
+        obj.setPosition({1, 0, 3});
+        obj.move({0, 0.2, -0.1});
+        obj.setScale({12, 12, 12});
+        renderer.addRenderObject(obj);
+    }
+
+    // create sphere mesh
+    Mesh sphere;
+
+    // create sphere mesh
+    uint32_t slices = 100, circles = 100;
+    createSphereMesh(sphere, slices, circles, {1, 1, 1});
+
+    // upload mesh data to gpu
+    renderer.uploadMesh(sphere);
+
+    // create renderable object
+    RenderObject sphereObj(&sphere, &defaultMaterial);
+    sphereObj.setPosition({-1, 0, 4});
+
+    renderer.addRenderObject(sphereObj);
+
+    // // // create a plane
+    // Mesh plane;
+
+    // float width = 10;
+    // float height = 10;
+    // createRectangleMesh(plane, width, height, {1, 0, 0});
+
+    // // upload mesh data
+    // renderer.uploadMesh(plane);
+
+    // // create renderable object
+    // RenderObject planeObj(&plane, &defaultMaterial);
+    // planeObj.setRotation({1, 0 ,0}, -90); // rotate about x axis 90 degrees
+    // planeObj.setPosition({0, -2, 0});
+
+    // renderer.addRenderObject(planeObj);
 
     // the game loop
     while(gameIsRunning){
@@ -76,19 +125,15 @@ int main(){
                 gameIsRunning = false;
             }
 
-            if(event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED){
+            // NOTE : There is a minor bug here
+            // When we start the window, aspecti ratio is not set properly and objects are rendered distored
+            // to fix that I recreate swapchain when frame number is 0
+            if(((event.type == SDL_WINDOWEVENT) && (event.window.event == SDL_WINDOWEVENT_RESIZED)) || (frameNumber == 0)){
                 // inform renderer about
                 renderer.windowResized();
 
-                // get window size
-                int windowWidth = 0, windowHeight = 0;
-                SDL_GetWindowSize(window, &windowWidth, &windowHeight);
-
-                // update camera aspect ratio
-                aspectRatio = static_cast<float>(windowWidth)/windowHeight;
-                camera.setAspectRatio(aspectRatio);
-
-                // update projection matrix in renderer
+                // update aspect ratio and projection matrix of camera
+                camera.updateAspectRatio(window);
                 projectionMatrix = camera.getProjectionMatrix();
             }
 
@@ -116,13 +161,13 @@ int main(){
                 // process mouse events
                 if(mouse.leftBtn == MouseBtnState::Pressed && mouse.inMotion){
                     rotation.x = mouse.xrel * angularSpeed;
-                    rotation.y = mouse.yrel * angularSpeed;
+                    rotation.y -= mouse.yrel * angularSpeed;
                 }
             }
         }
 
         // update camera orientation and location
-        camera.update(move, rotation, deltaTime/100);
+        camera.update(move, rotation, deltaTime);
 
         // update light position
         renderer.uniformData.lightPosition = {radius * sin(glm::radians(float(frameNumber))), radius * cos(glm::radians(float(frameNumber))), 0};
@@ -179,7 +224,7 @@ SDL_Window* createWindow(){
         SDL_WindowFlags::SDL_WINDOW_RESIZABLE |
         SDL_WindowFlags::SDL_WINDOW_ALLOW_HIGHDPI;
 
-	// create sdl window
+    // create sdl window
     window = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_UNDEFINED,
                               SDL_WINDOWPOS_UNDEFINED, MIN_WINDOW_WIDTH,
                               MIN_WINDOW_HEIGHT, windowCreationFlags);
@@ -187,7 +232,8 @@ SDL_Window* createWindow(){
     // check if created or not
     if (window == nullptr) {
         std::cerr << "Failed to create game window : [" << SDL_GetError() << "]"
-				  << std::endl;
+                  << std::endl;
+
         exit(-1);
     }
 

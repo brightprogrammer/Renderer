@@ -13,8 +13,14 @@
 #include "ReturnCode.hpp"
 
 struct Mesh{
+    // vertex buffer
     std::vector<Vertex> vertices;
     AllocatedBuffer vertexBuffer;
+
+    // indices buffer
+    bool hasIndexBuffer = false;
+    std::vector<uint32_t> indices;
+    AllocatedBuffer indexBuffer;
 
     /**
      * @brief Load an obj file to mesh.
@@ -30,9 +36,9 @@ struct Mesh{
  * @param[out] mesh Mesh object to store vertex data into.
  * @param[in] slices Number of vertical lines on sphere.
  * @param[in] circles Number of horizontal lines on sphere.
- * @param[in] radius Radius of sphere.
+ * @param[in] color Color of sphere.
  * */
-void createSphereMesh(Mesh& mesh, uint32_t slices, uint32_t circles, float radius, glm::vec3 color = {0.1f, 0.1f, 0.1f});
+void createSphereMesh(Mesh& mesh, uint32_t slices, uint32_t circles, glm::vec3 color = {0.1f, 0.1f, 0.1f});
 
 /**
  * @brief Create a rectangle mesh of given width and height.

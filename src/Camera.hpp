@@ -10,6 +10,7 @@
 
 #include <glm/fwd.hpp>
 #include <glm/glm.hpp>
+#include <SDL2/SDL.h>
 
 class Camera{
 public:
@@ -31,12 +32,22 @@ public:
     Camera(float fieldOfView, float aspectRatio, const glm::vec3& pos, const glm::vec3& up, const glm::vec3& front);
 
     /**
-     * @brief Update camera position.
-     * @param[in] move vector. This will decide how far the camera will move in x,y and z coordinates.
-     * @param[in] rotation (in degrees) of camera along yz and xz plane about camera up vector.
+     * @brief Update camera position and orientation.
+     * This must be called after calculation for motion and rotation events are done
+     * per frame. That is only once in a while loop.
+     *
+     * @param[in] move 3D vector describing motion in x, y and z direction.
+     * @param[in] rotation 2D vector describing vertical and horizontal rotation.
      * @param[in] deltaTime is time passed (in milliseconds) after previous call.
      */
-    void update(glm::vec3 move, glm::vec2 rotation, float deltaTime);
+    void update(const glm::vec3& move, const glm::vec2& rotation, float deltaTime);
+
+    /**
+     * @brief Update camera aspect ratio based on window size.
+     *
+     * @param window Window that is using this camera.
+     * */
+    void updateAspectRatio(SDL_Window* window);
 
     /// get view matrix of camera
     const glm::mat4& getViewMatrix() const{
@@ -66,12 +77,17 @@ public:
     /// get camera position
     inline const glm::vec3& getPosition() const { return position; }
 
-    // get camera up direction
+    /// get camera up direction
     inline const glm::vec3& getUpDirection() const { return up; }
 
-    // get camera front direction
+    /// get camera front direction
     inline const glm::vec3& getFrontDirection() const { return front; }
 
+    /// camera linear speed
+    glm::vec3 linearSpeed = glm::vec3(10.f);
+
+    /// camera angular speed
+    glm::vec2 angularSpeed = glm::vec2(0.20f);
 private:
     float fieldOfView = 70.f;
     float aspectRatio = 16.f/9;

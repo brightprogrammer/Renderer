@@ -83,7 +83,7 @@ Renderer::Renderer(SDL_Window *window)
     initGraphicsPipeline();
 
     // load meshes
-    loadMeshes();
+    // loadMeshes();
 }
 
 // destroy renderer
@@ -699,29 +699,20 @@ void Renderer::initSyncStructures(){
 
 // load mesh
 void Renderer::loadMeshes(){
-    // mesh.loadFromObj("../assets/InteriorTest.obj");
-    // uploadMesh(mesh);
+    meshes["apple"] = {};
+    Mesh& apple = meshes["apple"];
 
-    // meshes["car"] = mesh;
+    if(apple.loadFromObj("../assets/apple.obj") != FAILED){
+        uploadMesh(apple);
 
-    glm::vec3 pos = {2, 2, 2};
-    glm::vec3 scale = {4, 4, 4};
-    glm::vec3 rotAxis = {1, 0, 0};
-    float rotAngle = 0;
-
-    // RenderObject obj(getMesh("car"), getMaterial("defaultMaterial"),
-    //                  pos, scale, rotAxis, rotAngle);
-    // renderables.push_back(obj);
-
-
-    // change object attributes
-    // rotAxis = {0, 1, 1};
-    // rotAngle = 37;
-    // pos = {40, 0, -40};
-    // obj.setRotation(rotAxis, rotAngle);
-    // obj.setScale({1, 1, 1});
-    // obj.setPosition(pos);
-    // renderables.push_back(obj);
+        RenderObject obj(getMesh("apple"), getMaterial("defaultMaterial"));
+        obj.setPosition({1, 0, 3});
+        obj.move({0, 0.2, -0.1});
+        obj.setScale({16, 16, 16});
+        // obj.setRotation({0, 1, 0}, 180);
+        // obj.setRotation({1, 0, 0}, 120);
+        renderObjects.push_back(obj);
+    }
 
     // create sphere mesh
     meshes["sphere"] = Mesh{};
@@ -729,61 +720,74 @@ void Renderer::loadMeshes(){
 
     // create sphere mesh
     uint32_t slices = 100, circles = 100;
-    float radius = 1.f;
-    createSphereMesh(sphere, slices, circles, radius, {1, 1, 1});
+    createSphereMesh(sphere, slices, circles, {1, 1, 1});
 
     // upload mesh data to gpu
     uploadMesh(sphere);
 
     // create renderable object
-    pos = {0, 0, 4};
     RenderObject sphereObj(getMesh("sphere"), getMaterial("defaultMaterial"));
-    sphereObj.setPosition(pos);
+    sphereObj.setPosition({-1, 0, 4});
 
-    renderables.push_back(sphereObj);
+    renderObjects.push_back(sphereObj);
 
     // // create a plane
-    // meshes["plane"] = Mesh{};
-    // Mesh& plane = meshes["plane"];
+    meshes["plane"] = Mesh{};
+    Mesh& plane = meshes["plane"];
 
-    // float width = 100;
-    // float height = 100;
-    // createRectangleMesh(plane, width, height);
+    float width = 10;
+    float height = 10;
+    createRectangleMesh(plane, width, height, {1, 0, 0});
 
-    // // upload mesh data
-    // uploadMesh(plane);
+    // upload mesh data
+    uploadMesh(plane);
 
-    // // create renderable object
-    // RenderObject planeObj(getMesh("plane"), getMaterial("defaultMaterial"));
-    // planeObj.setRotation({1, 0 ,0}, -90); // rotate about x axis 90 degrees
-    // planeObj.setPosition({0, -10, 0});
+    // create renderable object
+    RenderObject planeObj(getMesh("plane"), getMaterial("defaultMaterial"));
+    planeObj.setRotation({1, 0 ,0}, -90); // rotate about x axis 90 degrees
+    planeObj.setPosition({0, -2, 0});
 
-    // renderables.push_back(planeObj);
+    renderObjects.push_back(planeObj);
 };
 
-void Renderer::uploadMesh(Mesh &mesh) {
-    // calculate buffer size
-    size_t bufferSize = mesh.vertices.size() * sizeof(Vertex);
-
+// upload just any buffer to gpu
+AllocatedBuffer Renderer::uploadDataToGPU(void* data, size_t size, VkBufferUsageFlags flags){
     // create staging buffer (in cpu ram)
-    AllocatedBuffer stagingBuffer = createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-    // move last pushed function
+    AllocatedBuffer stagingBuffer = createBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+    // remove last pushed function
+    // last pushed destructor is destructor for stagin buffer
+    // this buffer must be destroyed just after use!!
     mainDeletionQueue.deletors.pop_back();
 
-    //copy vertex data to staging buffer
-    void* data;
-    vmaMapMemory(allocator, stagingBuffer.allocation, &data);
-    memcpy(data, mesh.vertices.data(), mesh.vertices.size() * sizeof(Vertex));
+    //copy data to staging buffer
+    void* memptr;
+    vmaMapMemory(allocator, stagingBuffer.allocation, &memptr);
+    memcpy(memptr, data, size);
     vmaUnmapMemory(allocator, stagingBuffer.allocation);
 
-    // create vertex buffer (in gpu ram)
-    mesh.vertexBuffer = createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+    // create buffer (in gpu ram)
+    AllocatedBuffer gpuBuffer = createBuffer(size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | flags, VMA_MEMORY_USAGE_GPU_ONLY);
 
     // copy data from staging buffer (in cpu ram) to vertex buffer (in gpu ram)
-    copyBuffer(stagingBuffer.buffer, mesh.vertexBuffer.buffer, bufferSize);
+    copyBuffer(stagingBuffer.buffer, gpuBuffer.buffer, size);
 
     // destroy staging buffer
     vmaDestroyBuffer(allocator, stagingBuffer.buffer, stagingBuffer.allocation);
+
+    return gpuBuffer;
+}
+
+// upload Mesh data to gpu
+void Renderer::uploadMesh(Mesh &mesh) {
+    // upload vertex data
+    size_t vertexBufferSize = mesh.vertices.size() * sizeof(Vertex);
+    mesh.vertexBuffer = uploadDataToGPU(mesh.vertices.data(), vertexBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+
+    // upload index data if available
+    if(mesh.hasIndexBuffer){
+        size_t indexBufferSize = mesh.indices.size() * sizeof(uint32_t);
+        mesh.indexBuffer = uploadDataToGPU(mesh.indices.data(), indexBufferSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+    }
 }
 
 // draw on screen
@@ -902,8 +906,8 @@ void Renderer::draw(){
     };
     vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-    // draw renderables
-    drawObjects(cmd, renderables.data(), renderables.size());
+    // draw renderObjects
+    drawObjects(cmd, renderObjects.data(), renderObjects.size());
 
     // end renderpass
     vkCmdEndRenderPass(cmd);
@@ -1274,7 +1278,7 @@ Mesh* Renderer::getMesh(const std::string& name){
     return &(*it).second;
 }
 
-// draw a list of renderables
+// draw a list of renderObjects
 void Renderer::drawObjects(VkCommandBuffer cmd, RenderObject* first, size_t count){
     // store last mesh and last material to reduce total number of bindings in for loop
     Mesh* lastMesh = nullptr;
@@ -1302,9 +1306,17 @@ void Renderer::drawObjects(VkCommandBuffer cmd, RenderObject* first, size_t coun
             VkDeviceSize offset = 0;
             vkCmdBindVertexBuffers(cmd, 0, 1, &object.getMesh()->vertexBuffer.buffer, &offset);
             lastMesh = object.getMesh();
+
+            if(object.getMesh()->hasIndexBuffer){
+                vkCmdBindIndexBuffer(cmd, object.getMesh()->indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+            }
         }
 
         // finally draw this object
-        vkCmdDraw(cmd, object.getMesh()->vertices.size(), 1, 0, 0);
+        // if index draw
+        if(object.getMesh()->hasIndexBuffer)
+            vkCmdDrawIndexed(cmd, object.getMesh()->indices.size(), 1, 0, 0, 0);
+        // if normal vertex draw
+        else vkCmdDraw(cmd, object.getMesh()->vertices.size(), 1, 0, 0);
     }
 }

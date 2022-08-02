@@ -21,20 +21,6 @@ struct RenderObject {
     RenderObject(Mesh* mesh, Material* material);
 
     /**
-     * @brief Create RenderObject.
-     *
-     * @param mesh Pointer to mesh to apply shape.
-     * @param material Pointer to material to apply to object.
-     * @param pos Position of object.
-     * @param scale Scaling vector of object in 3D.
-     * @param rotationAxis Axis to do rotation about.
-     * @param rotationAngle Angles to rotate about rotation axis (in degrees).
-     * */
-    RenderObject(Mesh* mesh, Material* material,
-                 const glm::vec3& pos, const glm::vec3& scale,
-                 const glm::vec3& rotationAxis, float rotationAngle);
-
-    /**
      * @brief Set this mesh for this object.
      *
      * @param mesh Pointer to mesh to apply to this object.
@@ -67,7 +53,7 @@ struct RenderObject {
      *
      * @param pos
      * */
-    inline void setPosition(const glm::vec3& pos) { position = pos; }
+    void setPosition(const glm::vec3& pos);
 
     /**
      * @brief Get current position of object.
@@ -77,25 +63,31 @@ struct RenderObject {
     inline const glm::vec3& getPosition() { return position; }
 
     /**
+     * @brief Move object by given vector.
+     *
+     * @param moveVec providing direction and magnitude of motion.
+     * */
+    void move(const glm::vec3& moveVec);
+
+    /**
      * @brief Set rotation of this render object.
+     * This will be added over previous rotations of object.
+     * Last rotation data won't be stored.
      *
      * @param axis Rotation axis.
      * @param angle Rotation angle in degrees.
      * */
-    inline void setRotation(const glm::vec3& axis, float angle){
-        rotationAxis = axis;
-        rotationAngle = angle;
-    }
+    void setRotation(const glm::vec3& axis, float angle);
 
     /**
-     * @brief Get current rotation axis of object.
+     * @brief Get last rotation axis of object.
      *
      * @return glm::vec3
      * */
     inline const glm::vec3& getRotationAxis(){ return rotationAxis; }
 
     /**
-     * @brief Get current rotation of angle.
+     * @brief Get last rotation angle of object.
      *
      * @return float Angle in degrees
      * */
@@ -106,10 +98,10 @@ struct RenderObject {
      *
      * @param scale
      * */
-    inline void setScale(const glm::vec3& s) { scale = s; }
+    void setScale(const glm::vec3& s);
 
     /**
-     * @brief Get current scaling object.
+     * @brief Get last scaling vector object.
      *
      * @return glm::vec3
      * */
@@ -121,7 +113,6 @@ struct RenderObject {
      * @return glm::mat4
      * */
     inline const glm::mat4& getModelMatrix() {
-        updateModelMatrix();
         return modelMatrix;
     };
 private:
@@ -135,8 +126,11 @@ private:
     glm::vec3 rotationAxis = {1, 0, 0};
     float rotationAngle = 0;
 
-    // decides the position and oreintation of object in space
-    glm::mat4 modelMatrix;
+    //decides the position and oreintation of object in space
+    glm::mat4 translationMatrix = glm::mat4{1.f};
+    glm::mat4 rotationMatrix = glm::mat4{1.f};
+    glm::mat4 scaleMatrix = glm::mat4{1.f};
+    glm::mat4 modelMatrix = glm::mat4{1.f};
 };
 
 

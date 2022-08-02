@@ -36,35 +36,84 @@ public:
     // cleanup all vulkan structures
     void cleanup();
 
-    // draw to given window
+    /**
+     * @brief Upload mesh to GPU for rendering.
+     * Mesh must be uploaded to gpu before drawing it to GPU.
+     * Mesh must be uploaded only once.
+     *
+     * Uploading only makes Mesh drawable, it does not draw the mesh.
+     * To draw meshes to screen, one must create RenderObject and add
+     * it to list of objects to be drawn.
+     *
+     * @param mesh to be uploaded to GPU.
+     * */
+    void uploadMesh(Mesh& mesh);
+
+    /**
+     * @brief Draws all RenderObject objects present in renderObjects vector.
+     * To draw multiple objects in one frame, push RenderObjects to list of objects
+     * to be drawn (renderObjects) and then call this draw command at once.
+     * */
     void draw();
 
-    // tell renderer if a resize operation is being done on the given window
-    // if window is resizable and this function isn't called on resize,
-    // it'll result in crash
+    /**
+     * @brief Tell renderer if a resize operation is being done on the given window
+     * if window is resizable and this function isn't called on resize,
+     * it can result in crash or some undefined behaviour like image distortion etc...
+     */
     void windowResized();
 
-    // uniform data sent to shaders per frame
+    /**
+     * @brief Uniform data sent to shaders.
+     * This must be updated regularly whenever needed.
+     * */
     UniformData uniformData;
 
-    // array of renderable objects
-    std::vector<RenderObject> renderables;
+    /**
+     * @brief Contains list of objects to be drawn in single frame.
+     * One can clear this list every frame if list of objects is dynamic
+     * and recreate this list every frame.
+     * Or keep this list constant everyframe and just keep rendering objects.
+     * Usage of this vector depends on the user mostly.
+     * */
+    std::vector<RenderObject> renderObjects;
+
+    /**
+     * @brief Add given render object to renderObjects vector
+     * */
+    inline void addRenderObject(const RenderObject& obj) { renderObjects.push_back(obj); }
+
+    /**
+     * @brief Clear renderObjects vector.
+     * */
+    inline void clearRenderObjects() { renderObjects.clear(); }
+
+    /**
+     * @brief Register materials by name in renderer. Since this keeps a copy
+     * of material and creating a RenderObject requires pointer to material,
+     * you can get pointer to copied material using getMaterial() function
+     * and easily create a RenderObject.
+     * */
     std::unordered_map<std::string, Material> materials;
+
+     /**
+     * @brief Register meshes by name in renderer. Since this keeps a copy
+     * of material and creating a RenderObject requires pointer to mesh,
+     * you can get pointer to copied mesh using getMesh() function
+     * and easily create a RenderObject.
+     * */
     std::unordered_map<std::string, Mesh> meshes;
 
-    // create material and add it to the map
+    /// create material and add it to the map
     Material* createMaterial(VkPipeline pipeline, VkPipelineLayout layout, const std::string& name);
 
-    // find material by name
-    // returns nullptr if material cannot be found
+    /// Find material by name.
+    /// Returns nullptr if material cannot be found.
     Material* getMaterial(const std::string& name);
 
-    // find mesh by name
-    // returns nullptr if it can't be found
+    // Find mesh by name.
+    // Returns nullptr if it can't be found.
     Mesh* getMesh(const std::string& name);
-
-    // draw method
-    void drawObjects(VkCommandBuffer cmd, RenderObject* first, size_t count);
 private:
     // sdl window to render images to
     SDL_Window *window;
@@ -183,13 +232,10 @@ private:
     // keep count of frame number
     size_t frameNumber = 0;
 
-    // mesh to be loaded
-    Mesh mesh;
     // load meshes
     void loadMeshes();
-    // upload mesh to wherever we want
-    void uploadMesh(Mesh& mesh);
-
+    // upload data to gpu using staging buffer
+    AllocatedBuffer uploadDataToGPU(void* data, size_t size, VkBufferUsageFlags flags);
     // descriptor set layout
     VkDescriptorSetLayout globalDescriptorSetLayout;
     // descriptor pool to allocate sets from
@@ -220,6 +266,8 @@ private:
     // create buffer of given size and usage
     AllocatedBuffer createBuffer(size_t allocSize, VkBufferUsageFlags usageFlags, VmaMemoryUsage memoryUsage);
 
+    // record draw commands for drawing multiple objects
+    void drawObjects(VkCommandBuffer cmd, RenderObject* first, size_t count);
 };
 
 #endif//RENDERER_HPP

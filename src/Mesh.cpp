@@ -78,9 +78,10 @@ ReturnCode Mesh::loadFromObj(const char *filename){
 }
 
 // create mesh.mesh and store in given mesh object
-void createSphereMesh(Mesh& mesh, uint32_t slices, uint32_t circles, float radius, glm::vec3 color){
+void createSphereMesh(Mesh& mesh, uint32_t slices, uint32_t circles, glm::vec3 color){
     float verticalAngleStep = PI / circles;
     float horizontalAngleStep = 2*PI / slices;
+    float radius = 1.0f;
 
     for(uint32_t s = 0; s < slices; s++){
         Vertex v1, v2, v3;

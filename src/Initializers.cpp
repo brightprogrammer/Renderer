@@ -144,7 +144,7 @@ VkPipelineRasterizationStateCreateInfo defaultPipelineRasterizationStateCreateIn
         // so no need to draw back part
         .cullMode = VK_CULL_MODE_BACK_BIT,
         // how to decide front face
-        .frontFace = VK_FRONT_FACE_CLOCKWISE,
+        .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
         // The rasterizer can alter the depth values by adding a constant
         // value or biasing them based on a fragment's slope. This is
         // sometimes used for shadow mapping, but we won't be using it.
