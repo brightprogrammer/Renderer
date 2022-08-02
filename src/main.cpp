@@ -90,22 +90,22 @@ int main(){
 
     renderer.addRenderObject(sphereObj);
 
-    // // // create a plane
-    // Mesh plane;
+    // create a plane
+    Mesh plane;
 
-    // float width = 10;
-    // float height = 10;
-    // createRectangleMesh(plane, width, height, {1, 0, 0});
+    float width = 100;
+    float height = 100;
+    createRectangleMesh(plane, width, height, {1, 0, 0});
 
-    // // upload mesh data
-    // renderer.uploadMesh(plane);
+    // upload mesh data
+    renderer.uploadMesh(plane);
 
-    // // create renderable object
-    // RenderObject planeObj(&plane, &defaultMaterial);
-    // planeObj.setRotation({1, 0 ,0}, -90); // rotate about x axis 90 degrees
-    // planeObj.setPosition({0, -2, 0});
+    // create renderable object
+    RenderObject planeObj(&plane, &defaultMaterial);
+    planeObj.setRotation({1, 0 ,0}, -90); // rotate about x axis 90 degrees
+    planeObj.setPosition({0, -2, 0});
 
-    // renderer.addRenderObject(planeObj);
+    renderer.addRenderObject(planeObj);
 
     // the game loop
     while(gameIsRunning){

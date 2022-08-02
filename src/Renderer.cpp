@@ -1008,7 +1008,7 @@ void Renderer::initDescriptors(){
     // what type of data will be r/w from this binding
     uniformDataBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     // which shader stage will read from this binding?
-    uniformDataBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    uniformDataBinding.stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS; // meaning it can be read from any stage
 
     // give infromation about how the descriptors will be passed to shaders
     VkDescriptorSetLayoutCreateInfo setLayoutInfo = {};
