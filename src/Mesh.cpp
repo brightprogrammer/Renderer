@@ -83,80 +83,123 @@ void createSphereMesh(Mesh& mesh, uint32_t slices, uint32_t circles, glm::vec3 c
     float horizontalAngleStep = 2*PI / slices;
     float radius = 1.0f;
 
-    for(uint32_t s = 0; s < slices; s++){
-        Vertex v1, v2, v3;
+    // topmost point of sphere
+    Vertex v;
+    // for topmost point both theta and phi is 0
+    v.position = sphericalToCartesian(radius, 0, 0);
+    v.normal = glm::normalize(v.position);
+    v.color = color;
+    mesh.vertices.push_back(v);
 
-        // generate vertices for topmost circle
-        v1.position = sphericalToCartesian(radius, 0, 0);
-        v2.position = sphericalToCartesian(radius, s*horizontalAngleStep, verticalAngleStep);
-        v3.position = sphericalToCartesian(radius, (s+1)*horizontalAngleStep, verticalAngleStep);
+    // point just below topmost point but on surface of sphere
+    // horizontally just below sphere so theta = 0
+    // vertically it's just one step below
+    v.position = sphericalToCartesian(radius, 0, verticalAngleStep);
+    v.normal = glm::normalize(v.position);
+    mesh.vertices.push_back(v);
 
+    // index of first vertex in circle
+    uint32_t baseIndex = 1;
+
+    // generate vertices and indices for topmost circle
+    // all vertices lie on same circle
+    for(uint32_t s = 0; s < slices-1; s++){
+        // just horizontal position on sphere changes
+        v.position = sphericalToCartesian(radius, (s+1)*horizontalAngleStep, verticalAngleStep);
         // normal is just the normalized position in this case
-        v1.normal = glm::normalize(v1.position);
-        v2.normal = glm::normalize(v2.position);
-        v3.normal = glm::normalize(v3.position);
+        v.normal = glm::normalize(v.position);
 
-        // set color
-        v1.color = color;
-        v2.color = color;
-        v3.color = color;
+        // store new vertex
+        mesh.vertices.push_back(v);
 
-        // store triangle
-        mesh.vertices.push_back(v1);
-        mesh.vertices.push_back(v2);
-        mesh.vertices.push_back(v3);
-
-        // generate vertices for bottom-most circle
-        v1.position = sphericalToCartesian(radius, 0, PI);
-        v2.position = sphericalToCartesian(radius, s*horizontalAngleStep, (circles-1)*verticalAngleStep);
-        v3.position = sphericalToCartesian(radius, (s+1)*horizontalAngleStep, (circles-1)*verticalAngleStep);
-
-        // normal is just the normalized position in this case
-        v1.normal = glm::normalize(v1.position);
-        v2.normal = glm::normalize(v2.position);
-        v3.normal = glm::normalize(v3.position);
-
-        // color already set
-
-        // store triangle
-        mesh.vertices.push_back(v3);
-        mesh.vertices.push_back(v2);
-        mesh.vertices.push_back(v1);
+        // anticlockwise is front face
+        mesh.indices.push_back(0); // (baseIndex-1) topmost point is common to all
+        mesh.indices.push_back(baseIndex + s); // s-th point on new circle
+        mesh.indices.push_back(baseIndex + s+1); // (s+1)th point on new circle
     }
+
+    // final triangle
+    mesh.indices.push_back(0); // (baseIndex - 1) topmost point
+    mesh.indices.push_back(slices); // (baseIndex + slices-1) actually (slices-1) point but on circle
+    mesh.indices.push_back(1); // (baseIndex) actually first point (index = 0 on circle) but index is 1 in vertices vector
 
     // generate vertices leaving topmost circle and bottom-most circle
-    for(uint32_t s = 0; s < slices; s++){
-        for(uint32_t c = 1; c < circles - 1; c++){
-            Vertex v1, v2, v3, v4;
+    // going from 1 to circles because first circle is already drawn
+    // but we have to draw last circle in this loop only
+    for(uint32_t c = 1; c < circles; c++){
+        // store base index of previous circle
+        uint32_t prevBaseIndex = baseIndex;
 
+        // first point on new circle
+        v.position = sphericalToCartesian(radius, 0, c*verticalAngleStep);
+        v.normal = glm::normalize(v.position);
+        mesh.vertices.push_back(v);
+
+        // base index for this circle
+        baseIndex = mesh.vertices.size() - 1;
+
+        for(uint32_t s = 0; s < slices - 1; s++){
             // calculate position of these points
-            v1.position = sphericalToCartesian(radius, s*horizontalAngleStep, c*verticalAngleStep);
-            v2.position = sphericalToCartesian(radius, (s+1)*horizontalAngleStep, c*verticalAngleStep);
-            v3.position = sphericalToCartesian(radius, (s+1)*horizontalAngleStep, (c+1)*verticalAngleStep);
-            v4.position = sphericalToCartesian(radius, s*horizontalAngleStep, (c+1)*verticalAngleStep);
-
+            v.position = sphericalToCartesian(radius, s*horizontalAngleStep, c*verticalAngleStep);
             // normal is just the normalized position in this case
-            v1.normal = glm::normalize(v1.position);
-            v2.normal = glm::normalize(v2.position);
-            v3.normal = glm::normalize(v3.position);
-            v4.normal = glm::normalize(v4.position);
+            v.normal = glm::normalize(v.position);
 
-            v1.color = color;
-            v2.color = color;
-            v3.color = color;
-            v4.color = color;
+            // add new vertex to this circle
+            mesh.vertices.push_back(v);
 
-            // add first triangle to mesh
-            mesh.vertices.push_back(v1);
-            mesh.vertices.push_back(v4);
-            mesh.vertices.push_back(v2);
+            // indices for first triangle
+            mesh.indices.push_back(prevBaseIndex + s); // s-th point on above circle
+            mesh.indices.push_back(baseIndex + s); // s-th point on this circle
+            mesh.indices.push_back(baseIndex + s+1); // (s+1)-th point on this circle
 
-            // add second triangle to mesh
-            mesh.vertices.push_back(v2);
-            mesh.vertices.push_back(v4);
-            mesh.vertices.push_back(v3);
+            // indices for second triangle
+            mesh.indices.push_back(prevBaseIndex + s+1); // (s+1)-th point on above circle
+            mesh.indices.push_back(prevBaseIndex + s); // s-th point on above circle
+            mesh.indices.push_back(baseIndex + s+1); // (s+1)-th point on this circle
+
+            // this (s+1)-th point on current circle is not pushed yet
+            // but since we're generating points slice by slice
+            // it will eventually be pushed to this circle and
+            // since we're using relative addressing,
+            // the index will remain as we calculated
         }
+
+        // generate indices for last quad
+        // indices for first triangle
+        mesh.indices.push_back(prevBaseIndex + slices-1); // last point on above circle
+        mesh.indices.push_back(baseIndex + slices-1); // s-last point on this circle
+        mesh.indices.push_back(baseIndex); // first point on this circle
+
+        // indices for second triangle
+        mesh.indices.push_back(prevBaseIndex); // first point on above circle
+        mesh.indices.push_back(prevBaseIndex + slices-1); // lastPoint on above circle
+        mesh.indices.push_back(baseIndex); // first point on this circle
     }
+
+    // bottom most point of sphere
+    v.position = sphericalToCartesian(radius, 0, PI); // vertically opposite point to topmost point
+    v.normal = glm::normalize(v.position);
+    mesh.vertices.push_back(v);
+
+    // index of bottom most point
+    uint32_t lastIndex = mesh.vertices.size() - 1;
+
+    // vertices for bottom-most circle is already generated
+    // we just need to set indices matching with bottom-most point
+    for(uint32_t s = 0; s < slices - 1; s++){
+        // anticlockwise is front face
+        mesh.indices.push_back(baseIndex + s); // s-th point on circle just above bottom-most point
+        mesh.indices.push_back(lastIndex); // bottom-most point
+        mesh.indices.push_back(baseIndex + s+1); // (s+1)-th point on circle just above bottom-most point
+    }
+
+    // final triangle
+    mesh.indices.push_back(baseIndex + slices-1); // actually (slices-1) point but on circle
+    mesh.indices.push_back(lastIndex); // bottom-most point
+    mesh.indices.push_back(baseIndex); // actually first point (index = 0 on circle) but index is 1 in vertices vector
+
+    // we are using index buffers now!!
+    mesh.hasIndexBuffer = true;
 }
 
 void createRectangleMesh(Mesh& mesh, float width, float height, glm::vec3 color){
@@ -174,13 +217,16 @@ void createRectangleMesh(Mesh& mesh, float width, float height, glm::vec3 color)
     v.position = {-width/2, -height/2, 0};
     mesh.vertices.push_back(v);
 
-    // construct second triangle
-    v.position = {width/2, height/2, 0};
-    mesh.vertices.push_back(v);
-
-    v.position = {-width/2, -height/2, 0};
-    mesh.vertices.push_back(v);
-
     v.position = {width/2, -height/2, 0};
     mesh.vertices.push_back(v);
+
+    mesh.indices.push_back(0);
+    mesh.indices.push_back(1);
+    mesh.indices.push_back(2);
+
+    mesh.indices.push_back(0);
+    mesh.indices.push_back(2);
+    mesh.indices.push_back(3);
+
+    mesh.hasIndexBuffer = true;
 }

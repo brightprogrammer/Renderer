@@ -31,7 +31,6 @@ int main(){
     renderer.uniformData.lightPosition = {1, 1, 1};
     renderer.uniformData.lightColor = {1, 0.5, 0.25, 2};
     renderer.uniformData.ambientLightColor = {0.25, 0.5 , 1, 0.08};
-    renderer.uniformData.specularStrength = 4;
 
     // set to false when need to exit game loop
     bool gameIsRunning = true;
@@ -59,7 +58,7 @@ int main(){
     // keep track of mouse state
     MouseState mouse;
 
-    float radius = 5;
+    float radius = 2.5;
 
     Mesh apple;
     Material defaultMaterial = *renderer.getMaterial("defaultMaterial");
@@ -71,6 +70,7 @@ int main(){
         obj.setPosition({1, 0, 3});
         obj.move({0, 0.2, -0.1});
         obj.setScale({12, 12, 12});
+        obj.setRotation({0,0,1}, 180);
         renderer.addRenderObject(obj);
     }
 
@@ -78,7 +78,7 @@ int main(){
     Mesh sphere;
 
     // create sphere mesh
-    uint32_t slices = 100, circles = 100;
+    uint32_t slices = 80, circles = 80;
     createSphereMesh(sphere, slices, circles, {1, 1, 1});
 
     // upload mesh data to gpu
@@ -93,8 +93,8 @@ int main(){
     // create a plane
     Mesh plane;
 
-    float width = 100;
-    float height = 100;
+    float width = 5;
+    float height = 5;
     createRectangleMesh(plane, width, height, {1, 0, 0});
 
     // upload mesh data
@@ -103,7 +103,7 @@ int main(){
     // create renderable object
     RenderObject planeObj(&plane, &defaultMaterial);
     planeObj.setRotation({1, 0 ,0}, -90); // rotate about x axis 90 degrees
-    planeObj.setPosition({0, -2, 0});
+    planeObj.setPosition({0, -2, 2});
 
     renderer.addRenderObject(planeObj);
 
@@ -170,7 +170,7 @@ int main(){
         camera.update(move, rotation, deltaTime);
 
         // update light position
-        renderer.uniformData.lightPosition = {radius * sin(glm::radians(float(frameNumber))), radius * cos(glm::radians(float(frameNumber))), 0};
+        renderer.uniformData.lightPosition = {-1 + radius * sin(glm::radians(float(frameNumber))), 0, 4 + radius * cos(glm::radians(float(frameNumber)))};
 
         // update camera position
         renderer.uniformData.viewPosition = camera.getPosition();

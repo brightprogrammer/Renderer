@@ -11,7 +11,7 @@ struct UniformData {
     float padding1;
     glm::vec4 lightColor = {1, 0, 0, 1}; // w component stores light intensity
     glm::vec3 viewPosition = {0, 0, 0};
-    float specularStrength = 4;
+    float specularStrength = 1;
 };
 
 #endif//UNIFORM_DATA_HPP
