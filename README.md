@@ -12,4 +12,6 @@
 - Texture loading
 - Maybe cubemaps? (optional)
 - Try ray tracing maybe? (optional)
+- Integrate physics engine
+- Try ecs and all other fancy stuffs
 - Do some experiments!! (what's on your mind?)
