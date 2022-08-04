@@ -63,23 +63,23 @@ int main(){
     Mesh apple;
     Material defaultMaterial = *renderer.getMaterial("defaultMaterial");
 
-    if(apple.loadFromObj("../assets/apple.obj") != FAILED){
-        renderer.uploadMesh(apple);
+    // if(apple.loadFromObj("../assets/apple.obj") != FAILED){
+    //     renderer.uploadMesh(apple);
 
-        RenderObject obj(&apple, &defaultMaterial);
-        obj.setPosition({1, 0, 3});
-        obj.move({0, 0.2, -0.1});
-        obj.setScale({12, 12, 12});
-        obj.setRotation({0,0,1}, 180);
-        renderer.addRenderObject(obj);
-    }
+    //     RenderObject obj(&apple, &defaultMaterial);
+    //     obj.setPosition({1, 0, 3});
+    //     obj.move({0, 0.2, -0.1});
+    //     obj.setScale({12, 12, 12});
+    //     obj.setRotation({0,0,1}, 180);
+    //     renderer.addRenderObject(obj);
+    // }
 
     // create sphere mesh
     Mesh sphere;
 
     // create sphere mesh
-    uint32_t slices = 80, circles = 80;
-    createSphereMesh(sphere, slices, circles, {1, 1, 1});
+    uint32_t slices = 2, circles = 1;
+    createSphereMesh(sphere, slices, circles, {0, 1, 1});
 
     // upload mesh data to gpu
     renderer.uploadMesh(sphere);

@@ -42,6 +42,8 @@ void createSphereMesh(Mesh& mesh, uint32_t slices, uint32_t circles, glm::vec3 c
 
 /**
  * @brief Create a rectangle mesh of given width and height.
+ * @warn Keep slices and circles above 10 for better results.
+ * Below this value sometimes shows undefined behaviour.
  *
  * @param[out] mesh Mesh object to store vertex data into.
  * @param[in] width Width of plane
