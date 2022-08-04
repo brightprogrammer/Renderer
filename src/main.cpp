@@ -78,7 +78,7 @@ int main(){
     Mesh sphere;
 
     // create sphere mesh
-    uint32_t slices = 2, circles = 1;
+    uint32_t slices = 4, circles = 4;
     createSphereMesh(sphere, slices, circles, {0, 1, 1});
 
     // upload mesh data to gpu

@@ -142,7 +142,7 @@ void createSphereMesh(Mesh& mesh, uint32_t slices, uint32_t circles, glm::vec3 c
 
         for(uint32_t s = 0; s < slices - 1; s++){
             // calculate position of these points
-            v.position = sphericalToCartesian(radius, s*horizontalAngleStep, c*verticalAngleStep);
+            v.position = sphericalToCartesian(radius, (s+1)*horizontalAngleStep, c*verticalAngleStep);
             // normal is just the normalized position in this case
             v.normal = glm::normalize(v.position);
 
