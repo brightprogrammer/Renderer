@@ -80,8 +80,7 @@ ReturnCode Mesh::loadFromObj(const char *filename){
 // create mesh.mesh and store in given mesh object
 void createSphereMesh(Mesh& mesh, uint32_t slices, uint32_t circles, glm::vec3 color){
     slices = slices * 2;
-
-    float verticalAngleStep = PI / (circles + 1);
+    float verticalAngleStep = PI / (circles+1);
     float horizontalAngleStep = 2*PI / slices;
     float radius = 1.0f;
 
@@ -133,7 +132,7 @@ void createSphereMesh(Mesh& mesh, uint32_t slices, uint32_t circles, glm::vec3 c
         uint32_t prevBaseIndex = baseIndex;
 
         // first point on new circle
-        v.position = sphericalToCartesian(radius, 0, c*verticalAngleStep);
+        v.position = sphericalToCartesian(radius, 0, (c+1)*verticalAngleStep);
         v.normal = glm::normalize(v.position);
         mesh.vertices.push_back(v);
 
@@ -142,7 +141,7 @@ void createSphereMesh(Mesh& mesh, uint32_t slices, uint32_t circles, glm::vec3 c
 
         for(uint32_t s = 0; s < slices - 1; s++){
             // calculate position of these points
-            v.position = sphericalToCartesian(radius, (s+1)*horizontalAngleStep, c*verticalAngleStep);
+            v.position = sphericalToCartesian(radius, (s+1)*horizontalAngleStep, (c+1)*verticalAngleStep);
             // normal is just the normalized position in this case
             v.normal = glm::normalize(v.position);
 
