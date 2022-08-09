@@ -5,13 +5,13 @@
 - Wavefront (OBJ) mesh loading and basic shapes like plane, sphere etc...
 - Single point light
 - Automatic swapchain recreation on window resize
+- Mutliple point lights
 
 ## TODO
-- Mutliple point lights
 - Mutliple directional lighting
 - Texture loading
+- Volumetric Rendering
 - Maybe cubemaps? (optional)
 - Try ray tracing maybe? (optional)
 - Integrate physics engine
-- Try ecs and all other fancy stuffs
 - Do some experiments!! (what's on your mind?)
