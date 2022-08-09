@@ -11,6 +11,7 @@
 - Mutliple directional lighting
 - Texture loading
 - Volumetric Rendering
+- Deferred Renderer
 - Maybe cubemaps? (optional)
 - Try ray tracing maybe? (optional)
 - Integrate physics engine

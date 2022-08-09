@@ -48,13 +48,14 @@ void main(){
 
         // for point source we need to take into account the attenuation factor
         // attenuation is decaying of light intensity as distance from lightsource increases
-        float attenuation = 1.0 / dot(directionToLight, directionToLight); // distance squared
+        // float attenuation = 1.0 / dot(directionToLight, directionToLight); // distance squared
+        float attenuation = 1.0 / sqrt(dot(directionToLight, directionToLight)); // distance
 
         float specular = 0.5;
 
         // calculate light color after adjusting for intensity
         vec3 lightColor = uniformData.pointLights[i].color.xyz * uniformData.pointLights[i].color.w * attenuation;
-        float dotOfNormalAndLightDir = dot(normalize(inFragNormalWorld)), normalize(directionToLight));
+        float dotOfNormalAndLightDir = dot(normalize(inFragNormalWorld), normalize(directionToLight));
         vec3 diffuseLight = lightColor * max(dotOfNormalAndLightDir, 0);
 
         // specular lighting only if light is on right side

@@ -250,9 +250,9 @@ void createSurface(Mesh& mesh, const std::vector<float>& x, const std::vector<fl
             v4.position = {x[i], z(x[i], y[j+1]), y[j+1]};
 
             // normals correspondig to first triangle
-            v4.normal = glm::cross(v4.position - v1.position, v2.position - v1.position);
-            v2.normal = v1.normal;
-            v1.normal = v1.normal;
+            v4.normal = glm::cross(v2.position - v1.position, v4.position - v1.position);
+            v2.normal = v4.normal;
+            v1.normal = v4.normal;
 
             // v4.color = v4.normal;
             // v2.color = v2.normal;
@@ -264,9 +264,9 @@ void createSurface(Mesh& mesh, const std::vector<float>& x, const std::vector<fl
             mesh.vertices.push_back(v1);
 
             // normals correspondig to second triangle
-            v4.normal = glm::cross(v2.position - v3.position, v4.position - v3.position);
-            v3.normal = v1.normal;
-            v2.normal = v1.normal;
+            v4.normal = glm::cross(v4.position - v3.position, v2.position - v3.position);
+            v3.normal = v4.normal;
+            v2.normal = v4.normal;
 
             // v4.color = v4.normal;
             // v3.color = v3.normal;

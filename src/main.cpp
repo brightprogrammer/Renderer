@@ -106,16 +106,16 @@ int main(){
 
     Mesh terrain;
     // createSphereMesh(terrain, 100, 100);
-    createRectangleMesh(terrain, 30, 30, {1, 0.5, 0.25});
-    // std::vector<float> X;
-    // genLinear(X, -5, 5, 50);
-    // createSurface(terrain, X, X, genZ);
+    // createRectangleMesh(terrain, 30, 30, {1, 0.5, 0.25});
+    std::vector<float> X;
+    genLinear(X, -5, 5, 50);
+    createSurface(terrain, X, X, genZ);
 
     renderer.uploadMesh(terrain);
 
     RenderObject terrainObj(&terrain, &defaultMaterial);
-//    terrainObj.setScale({3, 3, 3});
-    terrainObj.setRotation(Camera::XAxis, 90);
+   terrainObj.setScale({3, 3, 3});
+//    terrainObj.setRotation(Camera::XAxis, 90);
     renderer.addRenderObject(terrainObj);
     std::cout << "Terrain Size : " << terrain.vertices.size() * sizeof(Vertex) + terrain.indices.size() * 4 << std::endl;
 
@@ -183,7 +183,7 @@ int main(){
 
         for(size_t i = 0; i < 9; i++){
             float radius = 2+i;
-            renderer.uniformData.pointLights[i].position = glm::vec4(sphericalToCartesian(radius, glm::radians(float(radius*frameNumber)), glm::radians(89.f)), 1);
+            renderer.uniformData.pointLights[i].position = glm::vec4(sphericalToCartesian(radius, glm::radians(float(radius*frameNumber)), PI/2), 1) + glm::vec4{0, 2, 0, 0};
         }
 
         // update camera position
