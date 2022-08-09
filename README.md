@@ -5,6 +5,7 @@
 - Wavefront (OBJ) mesh loading and basic shapes like plane, sphere etc...
 - Single point light
 - Automatic swapchain recreation on window resize
+- Create plots of 3D functions. Surface Mesh / Terrains.
 - Mutliple point lights
 
 ## TODO
