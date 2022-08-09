@@ -11,6 +11,7 @@
 #include <glm/fwd.hpp>
 #include <glm/glm.hpp>
 #include <SDL2/SDL.h>
+#include <iostream>
 
 class Camera{
 public:
@@ -30,6 +31,12 @@ public:
      * @param[in] front is the front vector of camera.
      */
     Camera(float fieldOfView, float aspectRatio, const glm::vec3& pos, const glm::vec3& up, const glm::vec3& front);
+
+    ~Camera(){
+        std::cout << position.x << " " << position.y << "  " << position.z << std::endl;
+        std::cout << up.x << " " << up.y << "  " << up.z << std::endl;
+        std::cout << front.x << " " << front.y << "  " << front.z << std::endl;
+    }
 
     /**
      * @brief Update camera position and orientation.
@@ -92,7 +99,7 @@ private:
     float fieldOfView = 70.f;
     float aspectRatio = 16.f/9;
     float nearPlane = 0.1f;
-    float farPlane = 200.f;
+    float farPlane = 300.f;
 
     glm::vec3 position = glm::vec3(0); // origin
     glm::vec3 up = YAxis; // y-axis

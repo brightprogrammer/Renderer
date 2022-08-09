@@ -850,7 +850,7 @@ void Renderer::draw(){
     // set a clear value to clear the screen with
     VkClearValue colorClear{
         .color = VkClearColorValue{
-            .float32 = {0.01, 0.01, 0.01, 1.f} // dark gray
+            .float32 = {0, 0, 0, 1.f} // dark gray
         }
     };
 

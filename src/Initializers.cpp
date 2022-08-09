@@ -142,7 +142,7 @@ VkPipelineRasterizationStateCreateInfo defaultPipelineRasterizationStateCreateIn
         .polygonMode = polygonMode,
         // basically only one side of an object is always visible
         // so no need to draw back part
-        .cullMode = VK_CULL_MODE_BACK_BIT,
+        .cullMode = VK_CULL_MODE_NONE,
         // how to decide front face
         .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
         // The rasterizer can alter the depth values by adding a constant

@@ -3,15 +3,26 @@
 
 #include <glm/glm.hpp>
 
+#define MAX_LIGHTS 16
+
+struct PointLight {
+    glm::vec4 position{0.f};
+    glm::vec4 color{1.f};
+};
+
+struct DirectionalLight {
+    glm::vec4 direction;
+    glm::vec4 color;
+};
+
 // represents a uniform buffer object
 struct UniformData {
-    glm::mat4 projectionViewMatrix;
-    glm::vec4 ambientLightColor = {1.f, 1.f, 1.f, 0.2}; // w is intensity
-    glm::vec3 lightPosition = {1, 1, 1};
-    float padding1;
-    glm::vec4 lightColor = {1, 0, 0, 1}; // w component stores light intensity
-    glm::vec3 viewPosition = {0, 0, 0};
-    float specularStrength = 1;
+    glm::mat4 projectionMatrix{1.f};
+    glm::mat4 viewMatrix{1.f};
+    glm::vec4 ambient{1.f};
+    glm::vec3 viewPosition{0.f};
+    uint32_t numPointLights = 0;
+    PointLight pointLights[MAX_LIGHTS];
 };
 
 #endif//UNIFORM_DATA_HPP

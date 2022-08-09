@@ -10,15 +10,26 @@ layout (location = 0) out vec3 fragColor;
 layout (location = 1) out vec3 fragPosWorld;
 layout (location = 2) out vec3 fragNormalWorld;
 
+#define MAX_LIGHTS 16
+
+struct PointLight {
+    vec4 position;
+    vec4 color;
+};
+
+struct DirectionalLight {
+    vec4 direction;
+    vec4 color;
+};
+
 // get uniform data
 layout(set = 0, binding = 0) uniform UniformData {
-    mat4 projectionViewMatrix;
-    vec4 ambientLightColor;
-    vec3 lightPosition;
-    float padding1;
-    vec4 lightColor;
+    mat4 projectionMatrix;
+    mat4 viewMatrix;
+    vec4 ambient;
     vec3 viewPosition;
-    float specularStrength;
+    uint numPointLights;
+    PointLight pointLights[MAX_LIGHTS];
 } uniformData;
 
 // push constants
@@ -37,7 +48,7 @@ void main(){
     fragColor = vColor;
 
     // calculate position in eye space
-    gl_Position = uniformData.projectionViewMatrix * vPositionWorldSpace;
+    gl_Position = uniformData.projectionMatrix * uniformData.viewMatrix * vPositionWorldSpace;
 
     fragColor = vColor;
 }

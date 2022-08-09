@@ -49,4 +49,11 @@ void createSphereMesh(Mesh& mesh, uint32_t slices, uint32_t circles, glm::vec3 c
  * */
 void createRectangleMesh(Mesh& mesh, float width, float height, glm::vec3 color = {0.1f, 0.1f, 0.1f});
 
+/**
+ * @brief Create a surface for given x, y vectors and z function.
+ *
+ * @param[out] mesh Mesh object to store vertex data into.
+ * */
+void createSurface(Mesh& mesh, const std::vector<float>& x, const std::vector<float>& y, float (*z)(float x, float y));
+
 #endif//MESH_HPP

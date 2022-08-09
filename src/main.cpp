@@ -17,9 +17,51 @@
 #include "Renderer.hpp"
 #include "Camera.hpp"
 #include "MouseState.hpp"
+#include "Math.hpp"
 
 SDL_Window* createWindow();
-bool handleEvents();
+
+void genPolarX(std::vector<float>& x, float r, uint32_t numElems){
+    float t = 2*PI/numElems;
+    x.resize(numElems);
+    for(size_t i = 0; i < numElems; i++){
+        x[i] = r*cos(t*i);
+    }
+}
+
+void genPolarY(std::vector<float>& y, float r, uint32_t numElems){
+    float t = 2*PI/numElems;
+    y.resize(numElems);
+    for(size_t i = 0; i < numElems; i++){
+        y[i] = r*sin(t*i);
+    }
+}
+
+void genLinear(std::vector<float>& x, float start, float stop, uint32_t numElems){
+    float step = (stop-start)/numElems;
+    x.resize(numElems);
+    for(size_t i = 0; i < numElems; i++)
+        x[i] = start + i*step;
+}
+
+float genZ(float x, float y){
+    float scale = 2;
+    return sin(scale*(x*x + y*y))/scale;
+}
+
+float getRand(){
+    return rand()/float(RAND_MAX);
+}
+
+glm::vec4 getRandColor(){
+    static int i = 0;
+    glm::vec4 col = {getRand(), getRand(), getRand(), 2};
+    return glm::normalize(col);
+}
+
+glm::vec3 operator * (float s, const glm::vec3& v){
+    return {s*v.x, s*v.y, s*v.z};
+}
 
 int main(){
     // create window to render to
@@ -28,9 +70,11 @@ int main(){
     // create renderer
     Renderer renderer(window);
 
-    renderer.uniformData.lightPosition = {1, 1, 1};
-    renderer.uniformData.lightColor = {1, 0.5, 0.25, 2};
-    renderer.uniformData.ambientLightColor = {0.25, 0.5 , 1, 0.08};
+    renderer.uniformData.numPointLights = 9;
+    for(size_t i = 0; i < 9; i++){
+        renderer.uniformData.pointLights[i].color = getRandColor();
+    }
+    renderer.uniformData.ambient = {0.25, 0.5 , 1, 0.08};
 
     // set to false when need to exit game loop
     bool gameIsRunning = true;
@@ -46,7 +90,7 @@ int main(){
     float fieldOfView = 45.f;
     int windowWidth = WINDOW_WIDTH, windowHeight = WINDOW_HEIGHT;
     float aspectRatio = static_cast<float>(windowWidth)/windowHeight;
-    Camera camera(fieldOfView, aspectRatio, glm::vec3(0, 0, 0), Camera::YAxis, Camera::ZAxis);
+    Camera camera(fieldOfView, aspectRatio, glm::vec3(0, 14, -25), 4*Camera::YAxis + 3*Camera::ZAxis, 12*Camera::ZAxis - 7*Camera::YAxis);
 
     glm::vec3 move;
     glm::vec2 rotation;
@@ -58,54 +102,22 @@ int main(){
     // keep track of mouse state
     MouseState mouse;
 
-    float radius = 2.5;
-
-    Mesh apple;
     Material defaultMaterial = *renderer.getMaterial("defaultMaterial");
 
-    // if(apple.loadFromObj("../assets/apple.obj") != FAILED){
-    //     renderer.uploadMesh(apple);
+    Mesh terrain;
+    // createSphereMesh(terrain, 100, 100);
+    createRectangleMesh(terrain, 30, 30, {1, 0.5, 0.25});
+    // std::vector<float> X;
+    // genLinear(X, -5, 5, 50);
+    // createSurface(terrain, X, X, genZ);
 
-    //     RenderObject obj(&apple, &defaultMaterial);
-    //     obj.setPosition({1, 0, 3});
-    //     obj.move({0, 0.2, -0.1});
-    //     obj.setScale({12, 12, 12});
-    //     obj.setRotation({0,0,1}, 180);
-    //     renderer.addRenderObject(obj);
-    // }
+    renderer.uploadMesh(terrain);
 
-    // create sphere mesh
-    Mesh sphere;
-
-    // create sphere mesh
-    uint32_t slices = 10, circles = 20;
-    createSphereMesh(sphere, slices, circles, {0, 1, 1});
-
-    // upload mesh data to gpu
-    renderer.uploadMesh(sphere);
-
-    // create renderable object
-    RenderObject sphereObj(&sphere, &defaultMaterial);
-    sphereObj.setPosition({-1, 0, 4});
-
-    renderer.addRenderObject(sphereObj);
-
-    // create a plane
-    Mesh plane;
-
-    float width = 5;
-    float height = 5;
-    createRectangleMesh(plane, width, height, {1, 0, 0});
-
-    // upload mesh data
-    renderer.uploadMesh(plane);
-
-    // create renderable object
-    RenderObject planeObj(&plane, &defaultMaterial);
-    planeObj.setRotation({1, 0 ,0}, -90); // rotate about x axis 90 degrees
-    planeObj.setPosition({0, -2, 2});
-
-    renderer.addRenderObject(planeObj);
+    RenderObject terrainObj(&terrain, &defaultMaterial);
+//    terrainObj.setScale({3, 3, 3});
+    terrainObj.setRotation(Camera::XAxis, 90);
+    renderer.addRenderObject(terrainObj);
+    std::cout << "Terrain Size : " << terrain.vertices.size() * sizeof(Vertex) + terrain.indices.size() * 4 << std::endl;
 
     // the game loop
     while(gameIsRunning){
@@ -169,16 +181,17 @@ int main(){
         // update camera orientation and location
         camera.update(move, rotation, deltaTime);
 
-        // update light position
-        renderer.uniformData.lightPosition = {-1 + radius * sin(glm::radians(float(frameNumber))), 0, 4 + radius * cos(glm::radians(float(frameNumber)))};
+        for(size_t i = 0; i < 9; i++){
+            float radius = 2+i;
+            renderer.uniformData.pointLights[i].position = glm::vec4(sphericalToCartesian(radius, glm::radians(float(radius*frameNumber)), glm::radians(89.f)), 1);
+        }
 
         // update camera position
         renderer.uniformData.viewPosition = camera.getPosition();
 
-        // update camera view
-        viewMatrix = camera.getViewMatrix();
         // update uniform data
-        renderer.uniformData.projectionViewMatrix = projectionMatrix * viewMatrix;
+        renderer.uniformData.viewMatrix = camera.getViewMatrix();
+        renderer.uniformData.projectionMatrix = camera.getProjectionMatrix();
 
         // draw to screen
         renderer.draw();

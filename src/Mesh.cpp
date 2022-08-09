@@ -231,3 +231,51 @@ void createRectangleMesh(Mesh& mesh, float width, float height, glm::vec3 color)
 
     mesh.hasIndexBuffer = true;
 }
+
+void createSurface(Mesh& mesh, const std::vector<float>& x, const std::vector<float>& y, float (*z)(float x, float y)){
+    assert((x.size() == y.size()) && "SIZE OF X AND Y VECTORS MUST BE SAME");
+
+    Vertex v1, v2, v3, v4;
+    v1.color = {0.25,0.25,0.25};
+    v2.color = {0.25,0.25,0.25};
+    v3.color = {0.25,0.25,0.25};
+    v4.color = {0.25,0.25,0.25};
+
+    for(uint32_t i = 0; i < x.size()-1; i++){
+        for(uint32_t j = 0; j < y.size()-1; j++){
+            // generate vertices of this cell's quad
+            v1.position = {x[i], z(x[i], y[j]), y[j]};
+            v2.position = {x[i+1], z(x[i+1], y[j]) , y[j]};
+            v3.position = {x[i+1], z(x[i+1], y[j+1]), y[j+1]};
+            v4.position = {x[i], z(x[i], y[j+1]), y[j+1]};
+
+            // normals correspondig to first triangle
+            v4.normal = glm::cross(v4.position - v1.position, v2.position - v1.position);
+            v2.normal = v1.normal;
+            v1.normal = v1.normal;
+
+            // v4.color = v4.normal;
+            // v2.color = v2.normal;
+            // v1.color = v1.normal;
+
+            // push first triangle
+            mesh.vertices.push_back(v4);
+            mesh.vertices.push_back(v2);
+            mesh.vertices.push_back(v1);
+
+            // normals correspondig to second triangle
+            v4.normal = glm::cross(v2.position - v3.position, v4.position - v3.position);
+            v3.normal = v1.normal;
+            v2.normal = v1.normal;
+
+            // v4.color = v4.normal;
+            // v3.color = v3.normal;
+            // v2.color = v2.normal;
+
+            // push second triangle
+            mesh.vertices.push_back(v4);
+            mesh.vertices.push_back(v3);
+            mesh.vertices.push_back(v2);
+        }
+    }
+}
